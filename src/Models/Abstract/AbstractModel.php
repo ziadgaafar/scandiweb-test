@@ -163,6 +163,45 @@ abstract class AbstractModel
         }
     }
 
+    /**
+     * Execute a query and return multiple rows
+     *
+     * @param string $query The SQL query
+     * @param array $params Query parameters
+     * @return array The result set
+     * @throws \RuntimeException if the query fails
+     */
+    protected function executeQuery(string $query, array $params = []): array
+    {
+        try {
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            throw new \RuntimeException("Database query error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Execute a query and return a single row
+     *
+     * @param string $query The SQL query
+     * @param array $params Query parameters
+     * @return array|null The result row or null if not found
+     * @throws \RuntimeException if the query fails
+     */
+    protected function executeSingle(string $query, array $params = []): ?array
+    {
+        try {
+            $stmt = $this->connection->prepare($query);
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ?: null;
+        } catch (\PDOException $e) {
+            throw new \RuntimeException("Database query error: " . $e->getMessage());
+        }
+    }
+
     protected function beginTransaction(): void
     {
         $this->connection->beginTransaction();
