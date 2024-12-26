@@ -141,31 +141,6 @@ class OrderResolver extends AbstractResolver
         return (int)$this->db->lastInsertId();
     }
 
-    /**
-     * Saves the selected attributes for an order item
-     * 
-     * @param int $orderItemId The order item ID
-     * @param array $attributes The selected attributes
-     * @return bool Success status
-     */
-    private function saveOrderItemAttributes(int $orderItemId, array $attributes): void
-    {
-        // Convert attributes array to JSON
-        $attributesJson = json_encode($attributes);
-
-        // Update the order_items table directly
-        $stmt = $this->db->prepare(
-            "UPDATE order_items 
-        SET selected_attributes = :attributes 
-        WHERE id = :itemId"
-        );
-
-        $stmt->execute([
-            'attributes' => $attributesJson,
-            'itemId' => $orderItemId
-        ]);
-    }
-
     public function getOrder(int $orderId): ?array
     {
         // Fetch order with items and additional details

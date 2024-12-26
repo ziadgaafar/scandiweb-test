@@ -3,7 +3,6 @@
 namespace App\GraphQL\Schema\Types;
 
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 
 class OrderType extends ObjectType
