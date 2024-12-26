@@ -2,6 +2,9 @@
 
 namespace App\GraphQL\Resolvers;
 
+use App\GraphQL\Exception\GraphQLException;
+use App\GraphQL\Exception\InvalidQuantityException;
+
 class OrderResolver extends AbstractResolver
 {
     private ProductResolver $productResolver;
@@ -22,35 +25,31 @@ class OrderResolver extends AbstractResolver
             // Start transaction
             $this->db->beginTransaction();
 
-            // Validate products are in stock
-            if (!$this->productResolver->checkProductAvailability($items)) {
-                throw new \RuntimeException("Some products are not available");
+            // Validate quantity for all items first
+            foreach ($items as $item) {
+                $this->validateQuantity($item['productId'], $item['quantity']);
             }
 
-            // Validate all selected attributes and calculate total amount
+            // Check product availability
+            $this->productResolver->checkProductAvailability($items);
+
+            // Validate attributes and calculate total amount
             $totalAmount = 0;
             foreach ($items as $item) {
-                // Validate product
-                $product = $this->productResolver->getProduct($item['productId']);
-                if (!$product) {
-                    throw new \RuntimeException("Product not found: " . $item['productId']);
-                }
-
-                // Validate attributes if present
-                if (
-                    isset($item['selectedAttributes']) &&
-                    !$this->attributeResolver->validateAttributeValues(
-                        $item['productId'],
-                        $item['selectedAttributes']
-                    )
-                ) {
-                    throw new \RuntimeException("Invalid attribute selection for product: " . $item['productId']);
-                }
+                // Validate product attributes
+                $this->attributeResolver->validateProductAttributes(
+                    $item['productId'],
+                    $item['selectedAttributes'] ?? null
+                );
 
                 // Calculate total amount
                 $price = $this->priceResolver->getPricesByProduct($item['productId'])[0]['amount'];
                 $itemTotal = $price * $item['quantity'];
                 $totalAmount += $itemTotal;
+            }
+
+            if ($totalAmount <= 0) {
+                throw new \InvalidArgumentException("Total order amount must be greater than 0");
             }
 
             // Create order record with total amount
@@ -66,15 +65,23 @@ class OrderResolver extends AbstractResolver
 
             // Return created order
             return $this->getOrder($orderId);
-        } catch (\Exception $e) {
-            // Rollback transaction
+        } catch (GraphQLException $e) {
             $this->db->rollBack();
-
-            // Log error for debugging
+            throw $e;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            // Log unexpected errors
             error_log("Order creation error: " . $e->getMessage());
             error_log("Trace: " . $e->getTraceAsString());
+            throw $e;
+        }
+    }
 
-            throw new \RuntimeException("Order creation failed: " . $e->getMessage());
+    private function validateQuantity(string $productId, int $quantity): void
+    {
+        // Ensure quantity is a positive integer greater than 0
+        if ($quantity <= 0) {
+            throw new InvalidQuantityException($productId, $quantity);
         }
     }
 

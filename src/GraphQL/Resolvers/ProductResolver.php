@@ -2,6 +2,9 @@
 
 namespace App\GraphQL\Resolvers;
 
+use App\GraphQL\Exception\ProductNotFoundException;
+use App\GraphQL\Exception\ProductUnavailableException;
+
 class ProductResolver extends AbstractResolver
 {
     public function getProducts(?array $args = []): array
@@ -80,17 +83,20 @@ class ProductResolver extends AbstractResolver
         return array_column($result, 'image_url');
     }
 
-    public function checkProductAvailability(array $products): bool
+    public function checkProductAvailability(array $items): bool
     {
-        $productIds = array_column($products, 'productId');
-        $placeholders = str_repeat('?,', count($productIds) - 1) . '?';
+        foreach ($items as $item) {
+            $product = $this->getProduct($item['productId']);
 
-        $result = $this->executeQuery(
-            "SELECT COUNT(*) as count FROM products 
-            WHERE id IN ($placeholders) AND in_stock = 1",  // Changed inStock to in_stock
-            $productIds
-        );
+            if (!$product) {
+                throw new ProductNotFoundException($item['productId']);
+            }
 
-        return $result[0]['count'] === count($productIds);
+            if (!$product['in_stock']) {
+                throw new ProductUnavailableException($item['productId']);
+            }
+        }
+
+        return true;
     }
 }

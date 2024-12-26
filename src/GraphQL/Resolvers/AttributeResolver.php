@@ -2,25 +2,51 @@
 
 namespace App\GraphQL\Resolvers;
 
+use App\GraphQL\Exception\InvalidAttributeException;
+use App\GraphQL\Exception\MissingAttributesException;
+
 class AttributeResolver extends AbstractResolver
 {
-    public function getAttributesByProduct(string $productId): ?array
+
+    public function validateProductAttributes(string $productId, ?array $selectedAttributes = null): void
+    {
+        $productAttributes = $this->getAttributesByProduct($productId);
+
+        // If product has no attributes, we're good
+        if (empty($productAttributes)) {
+            return;
+        }
+
+        // If product has attributes but none were selected
+        if (empty($selectedAttributes)) {
+            $missingAttributes = array_map(fn($attr) => $attr['name'], $productAttributes);
+            throw new MissingAttributesException($productId, $missingAttributes);
+        }
+
+        // Check if all required attributes are provided
+        $providedAttributeIds = array_map(fn($attr) => $attr['id'], $selectedAttributes);
+        $missingAttributes = [];
+
+        foreach ($productAttributes as $required) {
+            if (!in_array($required['id'], $providedAttributeIds)) {
+                $missingAttributes[] = $required['name'];
+            }
+        }
+
+        if (!empty($missingAttributes)) {
+            throw new MissingAttributesException($productId, $missingAttributes);
+        }
+
+        // Validate attribute values
+        if (!$this->validateAttributeValues($productId, $selectedAttributes)) {
+            throw new InvalidAttributeException("Invalid attribute values for product: {$productId}");
+        }
+    }
+
+    public function getAttributesByProduct(string $productId): array
     {
         try {
             // First verify if the product has any attributes
-            $checkQuery = "
-                SELECT COUNT(*) as count
-                FROM product_attributes
-                WHERE product_id = :productId
-            ";
-
-            $hasAttributes = $this->executeSingle($checkQuery, ['productId' => $productId]);
-
-            if (!$hasAttributes || $hasAttributes['count'] == 0) {
-                return null;
-            }
-
-            // Get the attribute sets - Note the changed alias from 'as' to 'attr_sets'
             $query = "
                 SELECT DISTINCT
                     attr_sets.id,
@@ -34,7 +60,7 @@ class AttributeResolver extends AbstractResolver
             $attributeSets = $this->executeQuery($query, ['productId' => $productId]);
 
             if (empty($attributeSets)) {
-                return null;
+                return [];
             }
 
             // For each attribute set, get its items
@@ -54,16 +80,8 @@ class AttributeResolver extends AbstractResolver
 
             return $attributeSets;
         } catch (\Exception $e) {
-            // Log the error with more detail
             error_log("Error fetching attributes for product $productId: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
-
-            if ($e instanceof \PDOException) {
-                error_log("Database error code: " . $e->getCode());
-                error_log("Database error info: " . print_r($this->db->errorInfo(), true));
-            }
-
-            return null;
+            return [];
         }
     }
 

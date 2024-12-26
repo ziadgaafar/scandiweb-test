@@ -1,3 +1,6 @@
+# Ignore the codebase documentation file
+codebase.md
+
 # PHP
 /vendor/
 composer.phar
