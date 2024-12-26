@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use App\Services\GraphQL\GraphQLService;
+use App\GraphQL\Exception\GraphQLException;
 
 class Router
 {
@@ -17,13 +18,18 @@ class Router
 
     public function dispatch(): void
     {
-        if ($this->requestPath === '/graphql') {
-            $this->handleGraphQLRequest();
-            return;
-        }
+        try {
+            if ($this->requestPath === '/graphql') {
+                $this->handleGraphQLRequest();
+                return;
+            }
 
-        // Handle 404 for non-GraphQL routes
-        $this->handle404();
+            // Handle 404 for non-GraphQL routes
+            $this->handle404();
+        } catch (\Throwable $e) {
+            // Let App class handle any uncaught exceptions
+            throw $e;
+        }
     }
 
     private function handleGraphQLRequest(): void
@@ -61,6 +67,7 @@ class Router
                 [
                     'message' => 'Not Found',
                     'extensions' => [
+                        'category' => 'user',
                         'code' => 'NOT_FOUND'
                     ]
                 ]
@@ -78,6 +85,7 @@ class Router
                 [
                     'message' => 'Method Not Allowed',
                     'extensions' => [
+                        'category' => 'user',
                         'code' => 'METHOD_NOT_ALLOWED'
                     ]
                 ]
@@ -94,6 +102,7 @@ class Router
                 [
                     'message' => 'Invalid request',
                     'extensions' => [
+                        'category' => 'user',
                         'code' => 'BAD_REQUEST'
                     ]
                 ]

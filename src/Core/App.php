@@ -4,7 +4,6 @@ namespace App\Core;
 
 use App\Config\Environment;
 use App\Services\Database\MySQLConnection;
-use App\Services\GraphQL\GraphQLService;
 
 class App
 {
@@ -82,11 +81,15 @@ class App
 
     public function run(): void
     {
-        // Handle CORS
-        $this->handleCORS();
+        try {
+            // Handle CORS
+            $this->handleCORS();
 
-        // Process the request
-        $this->router->dispatch();
+            // Process the request
+            $this->router->dispatch();
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     private function handleCORS(): void
