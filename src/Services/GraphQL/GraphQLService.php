@@ -89,14 +89,12 @@ class GraphQLService
                 $variables
             );
 
-            // Log any internal errors
+            // If there are errors, format them using our ErrorHandler
             if (!empty($result->errors)) {
                 foreach ($result->errors as $error) {
                     error_log("GraphQL Error: " . $error->getMessage());
                 }
-            }
 
-            if (!empty($result->errors)) {
                 return [
                     'errors' => array_map(
                         [ErrorHandler::class, 'formatError'],
@@ -108,7 +106,6 @@ class GraphQLService
 
             return $result->toArray();
         } catch (Error $e) {
-            // Log the full error details
             error_log("GraphQL Error: " . $e->getMessage());
             error_log("Trace: " . $e->getTraceAsString());
 
@@ -118,14 +115,14 @@ class GraphQLService
                 ]
             ];
         } catch (\Exception $e) {
-            // Log unexpected errors
             error_log("Unexpected Error: " . $e->getMessage());
             error_log("Trace: " . $e->getTraceAsString());
 
+            // Use our GraphQLException format for consistency
             return [
                 'errors' => [
                     [
-                        'message' => 'An unexpected error occurred: ' . $e->getMessage(),
+                        'message' => 'An unexpected error occurred',
                         'extensions' => [
                             'category' => 'internal',
                             'code' => 'INTERNAL_ERROR'

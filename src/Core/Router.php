@@ -3,7 +3,6 @@
 namespace App\Core;
 
 use App\Services\GraphQL\GraphQLService;
-use App\GraphQL\Exception\GraphQLException;
 
 class Router
 {
