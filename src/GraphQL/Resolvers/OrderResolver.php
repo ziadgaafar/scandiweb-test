@@ -6,12 +6,14 @@ class OrderResolver extends AbstractResolver
 {
     private ProductResolver $productResolver;
     private AttributeResolver $attributeResolver;
+    private PriceResolver $priceResolver;
 
     public function __construct()
     {
         parent::__construct();
         $this->productResolver = new ProductResolver();
         $this->attributeResolver = new AttributeResolver();
+        $this->priceResolver = new PriceResolver();
     }
 
     public function createOrder(array $items): ?array
@@ -46,7 +48,7 @@ class OrderResolver extends AbstractResolver
                 }
 
                 // Calculate total amount
-                $price = $product['prices'][0]['amount']; // Using first price for simplicity
+                $price = $this->priceResolver->getPricesByProduct($item['productId'])[0]['amount'];
                 $itemTotal = $price * $item['quantity'];
                 $totalAmount += $itemTotal;
             }
@@ -79,17 +81,18 @@ class OrderResolver extends AbstractResolver
     private function createOrderRecord(float $totalAmount): int
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO orders (status, total_amount, currency_id, created_at) VALUES ('pending', :total, 1, NOW())"
+            "INSERT INTO orders (status, total_amount, currency_id, created_at) 
+         VALUES ('pending', :total_amount, 1, NOW())"
         );
 
         $stmt->execute([
-            'total' => $totalAmount
+            'total_amount' => $totalAmount
         ]);
 
         return (int)$this->db->lastInsertId();
     }
 
-    private function createOrderItem(int $orderId, array $item): void
+    private function createOrderItem(int $orderId, array $item): int
     {
         // Get product details
         $product = $this->productResolver->getProduct($item['productId']);
@@ -98,14 +101,33 @@ class OrderResolver extends AbstractResolver
         }
 
         // Calculate price
-        $price = $product['prices'][0]['amount'];
-        $total = $price * $item['quantity'];
+        $price = $this->priceResolver->getPricesByProduct($item['productId'])[0]['amount'];
+
+        // Process selected attributes if present
+        $selectedAttributes = null;
+        if (isset($item['selectedAttributes'])) {
+            // Validate and enrich attribute data
+            $enrichedAttributes = [];
+            foreach ($item['selectedAttributes'] as $attr) {
+                $attributeSet = $this->attributeResolver->getAttributeSet($attr['id']);
+                if (!$attributeSet) {
+                    throw new \RuntimeException("Invalid attribute: " . $attr['id']);
+                }
+
+                $enrichedAttributes[] = [
+                    'id' => $attr['id'],
+                    'name' => $attributeSet['name'],
+                    'value' => $attr['value']
+                ];
+            }
+            $selectedAttributes = json_encode($enrichedAttributes);
+        }
 
         // Insert order item
         $stmt = $this->db->prepare(
             "INSERT INTO order_items 
-            (order_id, product_id, quantity, unit_price, total_price) 
-            VALUES (:orderId, :productId, :quantity, :unitPrice, :totalPrice)"
+        (order_id, product_id, quantity, unit_price, selected_attributes) 
+        VALUES (:orderId, :productId, :quantity, :unitPrice, :selectedAttributes)"
         );
 
         $stmt->execute([
@@ -113,68 +135,77 @@ class OrderResolver extends AbstractResolver
             'productId' => $item['productId'],
             'quantity' => $item['quantity'],
             'unitPrice' => $price,
-            'totalPrice' => $total
+            'selectedAttributes' => $selectedAttributes
         ]);
 
-        $orderItemId = (int)$this->db->lastInsertId();
-
-        // Insert selected attributes if any
-        if (isset($item['selectedAttributes'])) {
-            $this->saveOrderItemAttributes($orderItemId, $item['selectedAttributes']);
-        }
+        return (int)$this->db->lastInsertId();
     }
 
+    /**
+     * Saves the selected attributes for an order item
+     * 
+     * @param int $orderItemId The order item ID
+     * @param array $attributes The selected attributes
+     * @return bool Success status
+     */
     private function saveOrderItemAttributes(int $orderItemId, array $attributes): void
     {
+        // Convert attributes array to JSON
+        $attributesJson = json_encode($attributes);
+
+        // Update the order_items table directly
         $stmt = $this->db->prepare(
-            "INSERT INTO order_item_attributes 
-            (order_item_id, attribute_id, selected_value) 
-            VALUES (:orderItemId, :attributeId, :value)"
+            "UPDATE order_items 
+        SET selected_attributes = :attributes 
+        WHERE id = :itemId"
         );
 
-        foreach ($attributes as $attr) {
-            $stmt->execute([
-                'orderItemId' => $orderItemId,
-                'attributeId' => $attr['id'],
-                'value' => $attr['value']
-            ]);
-        }
+        $stmt->execute([
+            'attributes' => $attributesJson,
+            'itemId' => $orderItemId
+        ]);
     }
 
     public function getOrder(int $orderId): ?array
     {
         // Fetch order with items and additional details
-        $order = $this->executeSingle(
-            "SELECT 
-                o.*,
-                c.label as currency_label,
-                c.symbol as currency_symbol
-            FROM orders o
-            JOIN currencies c ON o.currency_id = c.id
-            WHERE o.id = :orderId",
-            ['orderId' => $orderId]
-        );
+        $query = "
+        SELECT 
+            o.*,
+            c.label as currency_label,
+            c.symbol as currency_symbol,
+            DATE_FORMAT(o.created_at, '%Y-%m-%dT%H:%i:%sZ') as createdAt
+        FROM orders o
+        JOIN currencies c ON o.currency_id = c.id
+        WHERE o.id = :orderId
+    ";
+
+        $order = $this->executeSingle($query, ['orderId' => $orderId]);
 
         if ($order) {
             // Fetch order items with their details
             $order['items'] = $this->getOrderItemsWithDetails($orderId);
+            $order['total'] = (float) $order['total_amount'];
+            $order['createdAt'] = $order['createdAt'] ?? date('Y-m-d\TH:i:s\Z');
         }
 
         return $order;
     }
 
-    public function getOrderItemsWithDetails(int $orderId): array
+    private function getOrderItemsWithDetails(int $orderId): array
     {
-        return $this->executeQuery(
-            "SELECT 
-                oi.*,
-                p.name as product_name,
-                p.id as product_id
-            FROM order_items oi
-            JOIN products p ON oi.product_id = p.id
-            WHERE oi.order_id = :orderId",
-            ['orderId' => $orderId]
-        );
+        $query = "
+        SELECT 
+            oi.*,
+            p.name as product_name,
+            p.brand as product_brand,
+            p.id as product_id
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = :orderId
+    ";
+
+        return $this->executeQuery($query, ['orderId' => $orderId]);
     }
 
     public function getOrderItems(int $orderId): array

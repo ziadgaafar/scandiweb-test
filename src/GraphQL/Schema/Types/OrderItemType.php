@@ -15,7 +15,12 @@ class OrderItemType extends ObjectType
             'fields' => [
                 'product' => [
                     'type' => Type::nonNull($this->typeRegistry->getType('product')),
-                    'description' => 'The product ordered'
+                    'description' => 'The product ordered',
+                    'resolve' => function ($orderItem) {
+                        return $this->typeRegistry
+                            ->getResolver('product')
+                            ->getProduct($orderItem['product_id']);
+                    }
                 ],
                 'quantity' => [
                     'type' => Type::nonNull(Type::int()),
@@ -23,15 +28,26 @@ class OrderItemType extends ObjectType
                 ],
                 'selectedAttributes' => [
                     'type' => Type::listOf($this->typeRegistry->getType('selectedAttribute')),
-                    'description' => 'Selected attribute values for the product'
+                    'description' => 'Selected attribute values for the product',
+                    'resolve' => function ($orderItem) {
+                        return isset($orderItem['selected_attributes'])
+                            ? json_decode($orderItem['selected_attributes'], true)
+                            : null;
+                    }
                 ],
                 'unitPrice' => [
                     'type' => Type::nonNull(Type::float()),
-                    'description' => 'Price per unit'
+                    'description' => 'Price per unit',
+                    'resolve' => function ($orderItem) {
+                        return (float) $orderItem['unit_price'];
+                    }
                 ],
                 'total' => [
                     'type' => Type::nonNull(Type::float()),
-                    'description' => 'Total price for this item'
+                    'description' => 'Total price for this item',
+                    'resolve' => function ($orderItem) {
+                        return (float) ($orderItem['unit_price'] * $orderItem['quantity']);
+                    }
                 ]
             ]
         ];

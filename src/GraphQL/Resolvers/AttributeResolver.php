@@ -110,24 +110,16 @@ class AttributeResolver extends AbstractResolver
         }
     }
 
-    /**
-     * Helper method to get valid attribute values for a product
-     */
-    private function getValidAttributeValues(string $productId, string $attributeId): array
+    public function getAttributeSet(string $attributeId): ?array
     {
-        $query = "
-            SELECT ai.value
-            FROM attribute_items ai
-            JOIN product_attributes pa ON ai.attribute_set_id = pa.attribute_set_id
-            WHERE pa.product_id = :productId 
-            AND ai.attribute_set_id = :attributeId
-        ";
-
-        $result = $this->executeQuery($query, [
-            'productId' => $productId,
-            'attributeId' => $attributeId
-        ]);
-
-        return array_column($result, 'value');
+        try {
+            return $this->executeSingle(
+                "SELECT * FROM attribute_sets WHERE id = :id",
+                ['id' => $attributeId]
+            );
+        } catch (\Exception $e) {
+            error_log("Error fetching attribute set: " . $e->getMessage());
+            return null;
+        }
     }
 }
