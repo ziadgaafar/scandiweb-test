@@ -19,10 +19,10 @@ abstract class AbstractModel
         $this->connection = MySQLConnection::getInstance()->getConnection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return isset($this->attributes[$this->primaryKey])
-            ? (int)$this->attributes[$this->primaryKey]
+            ? (string)$this->attributes[$this->primaryKey]
             : null;
     }
 
