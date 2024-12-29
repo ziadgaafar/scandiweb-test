@@ -75,7 +75,6 @@ class OrderRepository
             return $orderId;
         } catch (\Exception $e) {
             $this->connection->rollBack();
-            error_log("Order creation error: " . $e->getMessage());
             throw $e;
         }
     }
@@ -121,7 +120,6 @@ class OrderRepository
 
             return $order;
         } catch (\PDOException $e) {
-            error_log("Error fetching order: " . $e->getMessage());
             throw new \RuntimeException("Failed to fetch order");
         }
     }
@@ -141,7 +139,6 @@ class OrderRepository
                 'status' => $status
             ]);
         } catch (\PDOException $e) {
-            error_log("Error updating order status: " . $e->getMessage());
             throw new \RuntimeException("Failed to update order status");
         }
     }

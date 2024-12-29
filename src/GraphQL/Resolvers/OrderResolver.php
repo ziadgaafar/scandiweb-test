@@ -67,8 +67,6 @@ class OrderResolver
             // Re-throw known exceptions
             throw $e;
         } catch (\Exception $e) {
-            // Log unexpected errors and throw generic message
-            error_log("Order creation error: " . $e->getMessage());
             throw new GraphQLException(
                 "An error occurred while creating the order",
                 "internal",
@@ -179,7 +177,6 @@ class OrderResolver
         } catch (GraphQLException $e) {
             throw $e;
         } catch (\Exception $e) {
-            error_log("Error fetching order: " . $e->getMessage());
             throw new GraphQLException(
                 "An error occurred while fetching the order",
                 "internal",
@@ -220,7 +217,6 @@ class OrderResolver
         } catch (GraphQLException $e) {
             throw $e;
         } catch (\Exception $e) {
-            error_log("Error updating order status: " . $e->getMessage());
             throw new GraphQLException(
                 "An error occurred while updating the order",
                 "internal",
