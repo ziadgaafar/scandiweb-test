@@ -5,8 +5,7 @@ namespace App\Models;
 use App\Models\Abstract\AbstractModel;
 use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
-use App\GraphQL\Exception\InvalidQuantityException;
-use App\GraphQL\Exception\ProductUnavailableException;
+use Exception;
 
 class Order extends AbstractModel
 {
@@ -101,14 +100,14 @@ class Order extends AbstractModel
         foreach ($items as $item) {
             // Validate quantity
             if ($item['quantity'] <= 0) {
-                throw new InvalidQuantityException($item['productId'], $item['quantity']);
+                throw new Exception("Invalid quantity for product: {$item['productId']}");
             }
 
             // Get product details and validate availability
             $product = $this->productRepository->getById($item['productId']);
 
             if (!$product['in_stock']) {
-                throw new ProductUnavailableException($item['productId']);
+                throw new Exception("Product not available: {$item['productId']}");
             }
 
             // Get product price (assuming USD for now)
