@@ -5,45 +5,125 @@ namespace App\Models\Abstract;
 /**
  * Abstract base class for all attribute types
  */
-abstract class AbstractAttribute extends AbstractModel
+abstract class AbstractAttribute
 {
-    protected string $table = 'attributes';
-    protected array $fillable = ['name', 'type', 'display_value', 'value'];
+    protected array $data = [];
 
     /**
-     * Get all items for this attribute
+     * Initialize attribute
+     */
+    public function __construct()
+    {
+        // Empty constructor - data will be set via setData
+    }
+
+    /**
+     * Set attribute data and validate
+     *
+     * @param array $data Attribute data
+     * @throws \InvalidArgumentException If required data is missing
+     */
+    public function setData(array $data): void
+    {
+        // Validate required fields
+        $requiredFields = ['id', 'name', 'type', 'items'];
+        $missing = [];
+
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field])) {
+                $missing[] = $field;
+            }
+        }
+
+        if (!empty($missing)) {
+            $fields = implode(', ', $missing);
+            throw new \InvalidArgumentException("Missing required attribute properties: {$fields}");
+        }
+
+        $this->data = $data;
+    }
+
+    /**
+     * Get attribute ID
+     */
+    public function getId(): string
+    {
+        return $this->data['id'];
+    }
+
+    /**
+     * Get attribute name
+     */
+    public function getName(): string
+    {
+        return $this->data['name'];
+    }
+
+    /**
+     * Get attribute type
+     */
+    public function getType(): string
+    {
+        return $this->data['type'];
+    }
+
+    /**
+     * Get attribute items
      */
     public function getItems(): array
     {
-        $stmt = $this->connection->prepare(
-            "SELECT * FROM attribute_items WHERE attribute_id = :attribute_id"
-        );
-
-        $stmt->execute(['attribute_id' => $this->getId()]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->data['items'] ?? [];
     }
 
     /**
-     * Get attribute items for a specific product
+     * Convert to GraphQL format
      */
-    public function getItemsForProduct(int $productId): array
+    public function toGraphQL(): array
     {
-        $stmt = $this->connection->prepare(
-            "SELECT ai.* 
-            FROM attribute_items ai
-            JOIN product_attributes pa ON ai.id = pa.attribute_item_id
-            WHERE pa.product_id = :product_id 
-            AND ai.attribute_id = :attribute_id"
-        );
-
-        $stmt->execute([
-            'product_id' => $productId,
-            'attribute_id' => $this->getId()
-        ]);
-
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return [
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'type' => $this->getType(),
+            'items' => array_map(function ($item) {
+                return [
+                    'id' => $item['id'],
+                    'displayValue' => $item['displayValue'],
+                    'value' => $item['value'],
+                    '__typename' => 'Attribute'
+                ];
+            }, $this->getItems()),
+            '__typename' => 'AttributeSet'
+        ];
     }
 
+    /**
+     * Check if a value exists in attribute items
+     */
+    protected function hasValue(string $value): bool
+    {
+        foreach ($this->getItems() as $item) {
+            if ($item['value'] === $value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get display value for a given value
+     */
+    public function getDisplayValue(string $value): ?string
+    {
+        foreach ($this->getItems() as $item) {
+            if ($item['value'] === $value) {
+                return $item['displayValue'];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Validate a value against attribute rules
+     */
     abstract public function validateValue($value): bool;
-    abstract public function toGraphQL(): array;
 }

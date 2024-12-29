@@ -2,121 +2,247 @@
 
 namespace App\GraphQL\Resolvers;
 
+use App\Models\Order;
 use App\GraphQL\Exception\GraphQLException;
 use App\GraphQL\Exception\InvalidQuantityException;
-use App\Models\Order;
+use App\GraphQL\Exception\ProductNotFoundException;
+use App\GraphQL\Exception\ProductUnavailableException;
+use App\GraphQL\Exception\MissingAttributesException;
+use App\GraphQL\Exception\InvalidAttributeException;
 
-class OrderResolver extends AbstractResolver
+/**
+ * Resolver for Order-related GraphQL operations
+ */
+class OrderResolver
 {
+    private Order $orderModel;
     private ProductResolver $productResolver;
     private AttributeResolver $attributeResolver;
-    private PriceResolver $priceResolver;
-    private Order $orderModel;
 
     public function __construct()
     {
-        parent::__construct();
+        $this->orderModel = new Order();
         $this->productResolver = new ProductResolver();
         $this->attributeResolver = new AttributeResolver();
-        $this->priceResolver = new PriceResolver();
-        $this->orderModel = new Order();
     }
 
+    /**
+     * Create a new order
+     *
+     * @param array $items Order items from GraphQL input
+     * @return array|null Created order data or null on failure
+     * @throws GraphQLException
+     */
     public function createOrder(array $items): ?array
     {
         try {
-            // Validate quantity for all items first
-            foreach ($items as $item) {
-                $this->validateQuantity($item['productId'], $item['quantity']);
+            // Validate items structure
+            $this->validateItemsStructure($items);
+
+            // Validate and prepare items
+            $preparedItems = $this->validateAndPrepareItems($items);
+
+            // Create order using model
+            $orderData = $this->orderModel->createOrder([
+                'items' => $preparedItems
+            ]);
+
+            if (!$orderData) {
+                throw new GraphQLException(
+                    "Failed to create order",
+                    "user",
+                    "ORDER_CREATION_FAILED"
+                );
             }
 
-            // Check product availability
-            $this->productResolver->checkProductAvailability($items);
-
-            // Validate attributes and prepare order data
-            $orderData = $this->prepareOrderData($items);
-
-            // Create order using the Order model
-            $orderId = $this->orderModel->createOrder($orderData);
-
-            if (!$orderId) {
-                throw new GraphQLException("Failed to create order");
-            }
-
-            // Return the created order
-            return $this->getOrder($orderId);
-        } catch (GraphQLException $e) {
+            // Format response for GraphQL
+            return $this->orderModel->formatForGraphQL($orderData);
+        } catch (
+            InvalidQuantityException |
+            ProductNotFoundException |
+            ProductUnavailableException |
+            MissingAttributesException |
+            InvalidAttributeException $e
+        ) {
+            // Re-throw known exceptions
             throw $e;
         } catch (\Exception $e) {
+            // Log unexpected errors and throw generic message
             error_log("Order creation error: " . $e->getMessage());
-            error_log("Trace: " . $e->getTraceAsString());
-            throw $e;
+            throw new GraphQLException(
+                "An error occurred while creating the order",
+                "internal",
+                "ORDER_ERROR"
+            );
         }
     }
 
-    private function validateQuantity(string $productId, int $quantity): void
+    /**
+     * Validate items structure from GraphQL input
+     *
+     * @param array $items Items to validate
+     * @throws GraphQLException If structure is invalid
+     */
+    private function validateItemsStructure(array $items): void
     {
-        if ($quantity <= 0) {
-            throw new InvalidQuantityException($productId, $quantity);
+        if (empty($items)) {
+            throw new GraphQLException(
+                "Order must contain at least one item",
+                "user",
+                "INVALID_ORDER"
+            );
         }
-    }
-
-    private function prepareOrderData(array $items): array
-    {
-        $preparedItems = [];
-        $totalAmount = 0;
 
         foreach ($items as $item) {
-            // Validate product attributes
-            $this->attributeResolver->validateProductAttributes(
-                $item['productId'],
-                $item['selectedAttributes'] ?? null
-            );
-
-            // Calculate price
-            $price = $this->priceResolver->getPricesByProduct($item['productId'])[0]['amount'];
-            $itemTotal = $price * $item['quantity'];
-            $totalAmount += $itemTotal;
-
-            // Process selected attributes if present
-            $selectedAttributes = null;
-            if (isset($item['selectedAttributes'])) {
-                $enrichedAttributes = [];
-                foreach ($item['selectedAttributes'] as $attr) {
-                    $attributeSet = $this->attributeResolver->getAttributeSet($attr['id']);
-                    if (!$attributeSet) {
-                        throw new \RuntimeException("Invalid attribute: " . $attr['id']);
-                    }
-
-                    $enrichedAttributes[] = [
-                        'id' => $attr['id'],
-                        'name' => $attributeSet['name'],
-                        'value' => $attr['value']
-                    ];
-                }
-                $selectedAttributes = json_encode($enrichedAttributes);
+            if (!isset($item['productId'])) {
+                throw new GraphQLException(
+                    "Each item must have a productId",
+                    "user",
+                    "INVALID_ITEM"
+                );
             }
 
+            if (!isset($item['quantity'])) {
+                throw new GraphQLException(
+                    "Each item must have a quantity",
+                    "user",
+                    "INVALID_ITEM"
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate and prepare items for order creation
+     *
+     * @param array $items Raw items from GraphQL input
+     * @return array Prepared items
+     * @throws Various exceptions based on validation results
+     */
+    private function validateAndPrepareItems(array $items): array
+    {
+        $preparedItems = [];
+
+        foreach ($items as $item) {
+            // Validate product exists and is available
+            $product = $this->productResolver->getProduct($item['productId']);
+
+            if (!$product['inStock']) {
+                throw new ProductUnavailableException($item['productId']);
+            }
+
+            // Validate quantity
+            if ($item['quantity'] <= 0) {
+                throw new InvalidQuantityException($item['productId'], $item['quantity']);
+            }
+
+            // Validate attributes if present
+            if (isset($item['selectedAttributes'])) {
+                $this->attributeResolver->validateProductAttributes(
+                    $item['productId'],
+                    $item['selectedAttributes']
+                );
+            }
+
+            // Add to prepared items
             $preparedItems[] = [
                 'productId' => $item['productId'],
                 'quantity' => $item['quantity'],
-                'unit_price' => $price,
-                'selectedAttributes' => $selectedAttributes
+                'selectedAttributes' => $item['selectedAttributes'] ?? null
             ];
         }
 
-        if ($totalAmount <= 0) {
-            throw new \InvalidArgumentException("Total order amount must be greater than 0");
-        }
-
-        return [
-            'total_amount' => $totalAmount,
-            'items' => $preparedItems
-        ];
+        return $preparedItems;
     }
 
+    /**
+     * Get order by ID
+     *
+     * @param int $orderId Order ID
+     * @return array|null Order data
+     * @throws GraphQLException If order not found
+     */
     public function getOrder(int $orderId): ?array
     {
-        return $this->orderModel->getOrderWithDetails($orderId);
+        try {
+            $orderData = $this->orderModel->getOrder($orderId);
+
+            if (!$orderData) {
+                throw new GraphQLException(
+                    "Order not found: {$orderId}",
+                    "user",
+                    "ORDER_NOT_FOUND"
+                );
+            }
+
+            return $this->orderModel->formatForGraphQL($orderData);
+        } catch (GraphQLException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            error_log("Error fetching order: " . $e->getMessage());
+            throw new GraphQLException(
+                "An error occurred while fetching the order",
+                "internal",
+                "ORDER_ERROR"
+            );
+        }
+    }
+
+    /**
+     * Update order status
+     *
+     * @param int $orderId Order ID
+     * @param string $status New status
+     * @return array Updated order data
+     * @throws GraphQLException If update fails
+     */
+    public function updateOrderStatus(int $orderId, string $status): array
+    {
+        try {
+            $success = $this->orderModel->updateStatus($orderId, $status);
+
+            if (!$success) {
+                throw new GraphQLException(
+                    "Failed to update order status",
+                    "user",
+                    "STATUS_UPDATE_FAILED"
+                );
+            }
+
+            $orderData = $this->orderModel->getOrder($orderId);
+            return $this->orderModel->formatForGraphQL($orderData);
+        } catch (\InvalidArgumentException $e) {
+            throw new GraphQLException(
+                $e->getMessage(),
+                "user",
+                "INVALID_STATUS"
+            );
+        } catch (GraphQLException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            error_log("Error updating order status: " . $e->getMessage());
+            throw new GraphQLException(
+                "An error occurred while updating the order",
+                "internal",
+                "ORDER_ERROR"
+            );
+        }
+    }
+
+    /**
+     * Format error for GraphQL response
+     *
+     * @param \Exception $e Exception to format
+     * @return array Formatted error
+     */
+    private function formatError(\Exception $e): array
+    {
+        return [
+            'message' => $e->getMessage(),
+            'extensions' => [
+                'category' => $e instanceof GraphQLException ? $e->getCategory() : 'internal',
+                'code' => $e instanceof GraphQLException ? $e->getErrorCode() : 'INTERNAL_ERROR'
+            ]
+        ];
     }
 }

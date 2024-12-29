@@ -36,10 +36,35 @@ class GraphQLService
         $queryType = new ObjectType([
             'name' => 'Query',
             'fields' => [
+                'order' => [
+                    'type' => $this->typeRegistry->getType('order'),
+                    'args' => [
+                        'id' => Type::nonNull(Type::id())
+                    ],
+                    'resolve' => function ($root, $args) {
+                        return $this->typeRegistry->getResolver('order')->getOrder($args['id']);
+                    }
+                ],
                 'categories' => [
                     'type' => Type::listOf($this->typeRegistry->getType('category')),
                     'resolve' => function ($root, $args) {
                         return $this->typeRegistry->getResolver('category')->getCategories();
+                    }
+                ],
+                'category' => [
+                    'type' => $this->typeRegistry->getType('category'),
+                    'args' => [
+                        'name' => Type::nonNull(Type::string())
+                    ],
+                    'resolve' => function ($root, $args) {
+                        return $this->typeRegistry->getResolver('category')->getCategory($args['name']);
+                    }
+                ],
+                'topCategories' => [
+                    'type' => Type::listOf($this->typeRegistry->getType('category')),
+                    'args' => ['limit' => Type::int()],
+                    'resolve' => function ($root, $args) {
+                        return $this->typeRegistry->getResolver('category')->getTopCategories();
                     }
                 ],
                 'products' => [
@@ -59,7 +84,16 @@ class GraphQLService
                     'resolve' => function ($root, $args) {
                         return $this->typeRegistry->getResolver('product')->getProduct($args['id']);
                     }
-                ]
+                ],
+                'attributeSet' => [
+                    'type' => $this->typeRegistry->getType('attributeSet'),
+                    'args' => [
+                        'id' => Type::nonNull(Type::string())
+                    ],
+                    'resolve' => function ($root, $args) {
+                        return $this->typeRegistry->getResolver('attribute')->getAttributeSet($args['id']);
+                    }
+                ],
             ]
         ]);
 
@@ -103,7 +137,6 @@ class GraphQLService
                     'data' => $result->data,
                 ];
             }
-
             return $result->toArray();
         } catch (Error $e) {
             error_log("GraphQL Error: " . $e->getMessage());

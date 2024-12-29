@@ -14,11 +14,8 @@ class ProductFactory
      */
     public static function create(array $data): AbstractProduct
     {
-        $product = empty($data['attributes'])
-            ? new SimpleProduct()
-            : new ConfigurableProduct();
-
-        $product->fill($data);
-        return $product;
+        return empty($data['attributes'])
+            ? new SimpleProduct($data)
+            : new ConfigurableProduct($data);
     }
 }

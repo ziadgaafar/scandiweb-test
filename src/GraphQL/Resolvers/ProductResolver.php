@@ -2,44 +2,107 @@
 
 namespace App\GraphQL\Resolvers;
 
-use App\Models\Product\SimpleProduct;
+use App\Models\Product\ProductFactory;
+use App\Repositories\ProductRepository;
+use App\GraphQL\Exception\ProductNotFoundException;
 
-class ProductResolver extends AbstractResolver
+class ProductResolver
 {
-    private SimpleProduct $productModel;
+    private ProductRepository $productRepository;
 
     public function __construct()
     {
-        parent::__construct();
-        $this->productModel = new SimpleProduct();
+        $this->productRepository = new ProductRepository();
     }
 
+    /**
+     * Get all products with optional category filter
+     */
     public function getProducts(?array $args = []): array
     {
-        return $this->productModel->getProducts($args);
+        try {
+            $productsData = $this->productRepository->getAll($args);
+
+            // Convert each product data to its appropriate model instance
+            return array_map(function ($productData) {
+                return ProductFactory::create($productData)->toArray();
+            }, $productsData);
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Error fetching products: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
     }
 
+    /**
+     * Get products by category
+     */
     public function getProductsByCategory(string $category): array
     {
-        if ($category === 'all') {
-            return $this->getProducts();
+        try {
+            return $this->getProducts(['category' => $category]);
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Error fetching products by category: " . $e->getMessage(),
+                0,
+                $e
+            );
         }
-
-        return $this->getProducts(['category' => $category]);
     }
 
+    /**
+     * Get single product by ID
+     */
     public function getProduct(string $id): ?array
     {
-        return $this->productModel->getProduct($id);
+        try {
+            $productData = $this->productRepository->getById($id);
+
+            return ProductFactory::create($productData)->toArray();
+        } catch (ProductNotFoundException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Error fetching product: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
     }
 
+    /**
+     * Get product gallery images
+     */
     public function getProductGallery(string $productId): array
     {
-        return $this->productModel->getProductGallery($productId);
+        try {
+            return $this->productRepository->getProductGallery($productId);
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Error fetching product gallery: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
     }
 
+    /**
+     * Check availability of multiple products
+     */
     public function checkProductAvailability(array $items): bool
     {
-        return $this->productModel->checkProductsAvailability($items);
+        try {
+            return $this->productRepository->checkProductsAvailability($items);
+        } catch (ProductNotFoundException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Error checking product availability: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
     }
 }

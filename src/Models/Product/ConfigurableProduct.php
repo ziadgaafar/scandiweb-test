@@ -4,75 +4,80 @@ namespace App\Models\Product;
 
 use App\Models\Abstract\AbstractProduct;
 use App\GraphQL\Exception\InvalidAttributeException;
+use App\GraphQL\Exception\MissingAttributesException;
 
+/**
+ * Configurable Product implementation
+ * Represents products with selectable attributes (e.g., size, color)
+ */
 class ConfigurableProduct extends AbstractProduct
 {
     /**
      * Get all attributes for this configurable product
-     *
-     * @return array
      */
     public function getAttributes(): array
     {
-        return $this->executeQuery(
-            "SELECT 
-                attr_sets.id,
-                attr_sets.name,
-                attr_sets.type
-            FROM attribute_sets attr_sets
-            INNER JOIN product_attributes pa ON pa.attribute_set_id = attr_sets.id
-            WHERE pa.product_id = :productId",
-            ['productId' => $this->getId()]
-        );
+        return $this->data['attributes'] ?? [];
     }
 
     /**
-     * Get attribute items for a specific attribute set
-     *
-     * @param string $attributeSetId
-     * @return array
+     * Get items for a specific attribute set
      */
-    protected function getAttributeItems(string $attributeSetId): array
+    protected function getAttributeItems(string $attributeId): array
     {
-        return $this->executeQuery(
-            "SELECT 
-                id,
-                display_value as displayValue,
-                value
-            FROM attribute_items
-            WHERE attribute_set_id = :setId
-            ORDER BY id",
-            ['setId' => $attributeSetId]
-        );
+        foreach ($this->getAttributes() as $attribute) {
+            if ($attribute['id'] === $attributeId) {
+                return $attribute['items'] ?? [];
+            }
+        }
+
+        return [];
     }
 
     /**
-     * Validate selected attributes against product's configuration
-     *
-     * @param array $selectedAttributes
-     * @return bool
-     * @throws InvalidAttributeException
+     * Validate that all required attributes are selected with valid values
      */
     public function validateAttributes(array $selectedAttributes): bool
     {
         $productAttributes = $this->getAttributes();
+        $requiredAttributeIds = array_column($productAttributes, 'id');
+        $selectedAttributeIds = array_column($selectedAttributes, 'id');
 
-        // Check all required attributes are provided
-        foreach ($productAttributes as $attribute) {
-            if (!isset($selectedAttributes[$attribute['id']])) {
-                throw new InvalidAttributeException(
-                    "Missing required attribute: {$attribute['name']}"
-                );
-            }
+        // Check if all required attributes are provided
+        $missingAttributes = array_diff($requiredAttributeIds, $selectedAttributeIds);
+        if (!empty($missingAttributes)) {
+            $missingNames = array_map(function ($attrId) use ($productAttributes) {
+                foreach ($productAttributes as $attr) {
+                    if ($attr['id'] === $attrId) {
+                        return $attr['name'];
+                    }
+                }
+                return $attrId;
+            }, $missingAttributes);
 
-            $validValues = array_column(
-                $this->getAttributeItems($attribute['id']),
-                'value'
+            throw new MissingAttributesException(
+                $this->getId(),
+                $missingNames
             );
+        }
 
-            if (!in_array($selectedAttributes[$attribute['id']], $validValues)) {
+        // Validate each selected attribute value
+        foreach ($selectedAttributes as $selected) {
+            $attributeItems = $this->getAttributeItems($selected['id']);
+            $validValues = array_column($attributeItems, 'value');
+
+            if (!in_array($selected['value'], $validValues)) {
+                // Find attribute name for better error message
+                $attrName = '';
+                foreach ($productAttributes as $attr) {
+                    if ($attr['id'] === $selected['id']) {
+                        $attrName = $attr['name'];
+                        break;
+                    }
+                }
+
                 throw new InvalidAttributeException(
-                    "Invalid value for attribute {$attribute['name']}"
+                    "Invalid value for attribute {$attrName}"
                 );
             }
         }
@@ -80,8 +85,21 @@ class ConfigurableProduct extends AbstractProduct
         return true;
     }
 
+    /**
+     * Get product type identifier
+     */
     public function getType(): string
     {
         return 'configurable';
+    }
+
+    /**
+     * Override toArray to include additional configurable product data
+     */
+    public function toArray(): array
+    {
+        $data = parent::toArray();
+        $data['__typename'] = 'ConfigurableProduct';
+        return $data;
     }
 }

@@ -3,64 +3,162 @@
 namespace App\Models;
 
 use App\Models\Abstract\AbstractModel;
-use PDO;
 
+/**
+ * Category Model
+ * 
+ * Represents a product category in the system.
+ * Handles category-specific domain logic and validation.
+ */
 class Category extends AbstractModel
 {
-    protected string $table = 'categories';
-    protected array $fillable = ['name'];
+    /**
+     * @var array Fillable properties for the category
+     */
+    protected array $fillable = [
+        'name',
+        'product_count'
+    ];
 
-    public function getCategoriesWithProducts(): array
+    /**
+     * Category name validation rules
+     */
+    private const NAME_MIN_LENGTH = 2;
+    private const NAME_MAX_LENGTH = 191; // Matches database column length
+    private const NAME_PATTERN = '/^[a-zA-Z0-9\s\-_]+$/'; // Alphanumeric with spaces, hyphens, and underscores
+
+    /**
+     * Validate category name
+     *
+     * @param string $name Category name to validate
+     * @return bool Whether the name is valid
+     * @throws \InvalidArgumentException if name is invalid
+     */
+    public function validateName(string $name): bool
     {
-        try {
-            $stmt = $this->connection->query(
-                "SELECT c.*, COUNT(p.id) as product_count 
-                FROM {$this->table} c 
-                LEFT JOIN products p ON p.category = c.name 
-                GROUP BY c.name"
-            );
+        $name = trim($name);
+        $length = strlen($name);
 
-            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($categories as &$category) {
-                $this->fill($category);
-            }
-            return $categories;
-        } catch (\PDOException $e) {
-            throw new \RuntimeException("Error fetching categories with products: " . $e->getMessage());
+        if ($length < self::NAME_MIN_LENGTH) {
+            throw new \InvalidArgumentException(
+                "Category name must be at least " . self::NAME_MIN_LENGTH . " characters long"
+            );
         }
+
+        if ($length > self::NAME_MAX_LENGTH) {
+            throw new \InvalidArgumentException(
+                "Category name cannot exceed " . self::NAME_MAX_LENGTH . " characters"
+            );
+        }
+
+        if (!preg_match(self::NAME_PATTERN, $name)) {
+            throw new \InvalidArgumentException(
+                "Category name can only contain letters, numbers, spaces, hyphens, and underscores"
+            );
+        }
+
+        return true;
     }
 
-    public function findByName(string $name): ?self
+    /**
+     * Get category name
+     *
+     * @return string
+     */
+    public function getName(): string
     {
-        try {
-            $stmt = $this->connection->prepare(
-                "SELECT * FROM {$this->table} WHERE name = :name"
-            );
-            $stmt->execute(['name' => $name]);
-
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($result) {
-                $this->fill($result);
-                return $this;
-            }
-            return null;
-        } catch (\PDOException $e) {
-            throw new \RuntimeException("Error finding category by name: " . $e->getMessage());
-        }
+        return $this->getAttribute('name');
     }
 
-    public function getProductsByCategory(string $name): array
+    /**
+     * Set category name
+     *
+     * @param string $name
+     * @return self
+     * @throws \InvalidArgumentException if name is invalid
+     */
+    public function setName(string $name): self
     {
-        try {
-            $stmt = $this->connection->prepare(
-                "SELECT p.* FROM products p 
-                WHERE p.category = :category"
-            );
-            $stmt->execute(['category' => $name]);
+        $name = trim($name);
+        $this->validateName($name);
+        $this->setAttribute('name', strtolower($name)); // Store names in lowercase for consistency
+        return $this;
+    }
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            throw new \RuntimeException("Error fetching products by category: " . $e->getMessage());
+    /**
+     * Get product count
+     *
+     * @return int
+     */
+    public function getProductCount(): int
+    {
+        return (int) ($this->getAttribute('product_count') ?? 0);
+    }
+
+    /**
+     * Set product count
+     *
+     * @param int $count
+     * @return self
+     */
+    public function setProductCount(int $count): self
+    {
+        $this->setAttribute('product_count', max(0, $count)); // Ensure count is not negative
+        return $this;
+    }
+
+    /**
+     * Convert category to array for GraphQL response
+     *
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->getName(),
+            'productCount' => $this->getProductCount(),
+            '__typename' => 'Category'
+        ];
+    }
+
+    /**
+     * Create a new Category instance from array data
+     *
+     * @param array $data Category data
+     * @return self
+     */
+    public static function fromArray(array $data): self
+    {
+        $category = new self();
+
+        if (isset($data['name'])) {
+            $category->setName($data['name']);
         }
+
+        if (isset($data['product_count'])) {
+            $category->setProductCount($data['product_count']);
+        }
+
+        return $category;
+    }
+
+    /**
+     * Check if this category has any products
+     *
+     * @return bool
+     */
+    public function hasProducts(): bool
+    {
+        return $this->getProductCount() > 0;
+    }
+
+    /**
+     * Format category name for URLs (slug)
+     *
+     * @return string
+     */
+    public function getSlug(): string
+    {
+        return strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $this->getName()));
     }
 }

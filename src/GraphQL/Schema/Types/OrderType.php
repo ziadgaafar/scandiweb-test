@@ -25,7 +25,7 @@ class OrderType extends ObjectType
                     'type' => Type::nonNull(Type::float()),
                     'description' => 'The total cost of the order',
                     'resolve' => function ($order) {
-                        return (float) $order['total_amount'];
+                        return (float) $order['total'];
                     }
                 ],
                 'createdAt' => [
