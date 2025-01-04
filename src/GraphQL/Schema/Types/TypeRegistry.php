@@ -7,6 +7,7 @@ use App\GraphQL\Resolvers\CategoryResolver;
 use App\GraphQL\Resolvers\ProductResolver;
 use App\GraphQL\Resolvers\OrderResolver;
 use App\GraphQL\Resolvers\AttributeResolver;
+use App\GraphQL\Resolvers\PriceResolver;
 
 class TypeRegistry
 {
@@ -47,6 +48,7 @@ class TypeRegistry
             'product' => new ProductResolver(),
             'order' => new OrderResolver(),
             'attribute' => new AttributeResolver(),
+            'price' => new PriceResolver()
         ];
     }
 
