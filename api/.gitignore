@@ -2,7 +2,7 @@
 codebase.md
 
 # PHP
-/vendor/
+vendor
 composer.phar
 *.log
 
