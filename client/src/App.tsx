@@ -70,6 +70,7 @@ class App extends Component<Record<string, never>, AppState> {
       return {
         ...prevState,
         cartItems: newCartItems,
+        isCartOpen: true,
       };
     });
   };
