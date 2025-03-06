@@ -50,7 +50,7 @@ class Header extends Component<HeaderProps> {
             {this.categories.map((category) => (
               <Link
                 key={category}
-                to={`/${category === "all" ? "" : category}`}
+                to={`/${category}`}
                 className={`h-full flex items-center text-base uppercase text-text border-b-2 border-transparent transition-all duration-300 hover:text-primary hover:border-primary ${
                   currentCategory === category
                     ? "!border-primary !text-primary"
