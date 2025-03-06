@@ -94,6 +94,24 @@ class ProductDetailBase extends Component<
     this.setState({ selectedImageIndex: index });
   };
 
+  handlePreviousImage = () => {
+    this.setState((prevState) => ({
+      selectedImageIndex: Math.max(0, prevState.selectedImageIndex - 1),
+    }));
+  };
+
+  handleNextImage = () => {
+    const { data } = this.props;
+    if (!data?.product?.gallery) return;
+
+    this.setState((prevState) => ({
+      selectedImageIndex: Math.min(
+        data.product.gallery.length - 1,
+        prevState.selectedImageIndex + 1
+      ),
+    }));
+  };
+
   handleAddToCart = () => {
     const { data, onAddToCart } = this.props;
     const { selectedAttributes } = this.state;
@@ -168,12 +186,58 @@ class ProductDetailBase extends Component<
               ))}
             </div>
           </div>
-          <div className="w-[610px] h-[511px] relative overflow-hidden rounded">
+          <div className="w-[610px] h-[511px] relative overflow-hidden rounded group">
             <img
               src={product.gallery[this.state.selectedImageIndex]}
               alt={product.name}
               className="w-full h-full object-contain transition-transform duration-500 hover:scale-105"
             />
+            {product.gallery.length > 1 && (
+              <>
+                <button
+                  onClick={this.handlePreviousImage}
+                  className="cursor-pointer disabled:cursor-default absolute left-4 top-1/2 -translate-y-1/2 bg-black/75 hover:bg-black text-white p-2 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                  disabled={this.state.selectedImageIndex === 0}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 19.5L8.25 12l7.5-7.5"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={this.handleNextImage}
+                  className="cursor-pointer disabled:cursor-default absolute right-4 top-1/2 -translate-y-1/2 bg-black/75 hover:bg-black text-white p-2 transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                  disabled={
+                    this.state.selectedImageIndex === product.gallery.length - 1
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <div className="flex flex-col w-fit gap-y-12 max-w-md">
