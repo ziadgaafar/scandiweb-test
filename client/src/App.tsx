@@ -28,8 +28,6 @@ class App extends Component<Record<string, never>, AppState> {
     if (prevState.isCartOpen !== this.state.isCartOpen) {
       document.body.classList.toggle("prevent-scroll", this.state.isCartOpen);
     }
-
-    console.log(this.state.cartItems);
   }
 
   componentWillUnmount() {

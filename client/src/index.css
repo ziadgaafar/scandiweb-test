@@ -2,7 +2,7 @@
 
 @theme {
   /* Colors */
-  --color-primary: oklch(0.72 0.11 178);
+  --color-primary: #5ece7b;
   --color-text: oklch(0.13 0.002 280);
   --color-text-light: oklch(0.56 0.004 280);
   --color-border: oklch(0.9 0.001 280);
@@ -12,11 +12,6 @@
   /* Transitions */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --animate-default: opacity 0.3s var(--ease-default);
-
-  /* Shadows */
-  --shadow-overlay: 0px 4px 35px rgb(168 172 176 / 0.19);
-  --inset-shadow-sm: 0 2px 8px rgb(0 0 0 / 0.1);
-  --inset-shadow-primary: 0 4px 12px rgb(94 206 123 / 0.3);
 
   /* Animations */
   --animate-fade-in: fade-in 0.3s var(--ease-default);

@@ -31,7 +31,7 @@ class ProductCard extends Component<ProductCardProps> {
       prices,
       selectedCurrency,
     } = this.props;
-    const cardClassName = `relative p-4 cursor-pointer transition-all duration-300 hover:shadow-overlay group ${
+    const cardClassName = `relative p-4 cursor-pointer transition-all duration-300 hover:shadow-sm group ${
       !inStock ? "opacity-50 cursor-not-allowed" : ""
     }`;
     const productUrl = `/product/${id}`;
