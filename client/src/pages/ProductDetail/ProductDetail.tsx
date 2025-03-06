@@ -236,7 +236,7 @@ class ProductDetailBase extends Component<
                         onClick={() =>
                           this.handleAttributeChange(attribute.id, item.value)
                         }
-                        data-testid={`attribute-${attribute.name.toLowerCase()}-${
+                        data-testid={`product-attribute-${attribute.name.toLowerCase()}-${
                           item.value
                         }`}
                       >
