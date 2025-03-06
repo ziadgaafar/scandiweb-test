@@ -21,29 +21,43 @@ class Environment
     public static function load(): void
     {
         if (empty(self::$variables)) {
-            $envFile = dirname(__DIR__, 2) . '/.env';
-
-            if (!file_exists($envFile)) {
-                throw new \RuntimeException('.env file not found');
+            // First load from PHP environment
+            foreach ($_ENV as $name => $value) {
+                self::$variables[$name] = $value;
             }
 
-            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-            foreach ($lines as $line) {
-                if (strpos($line, '#') === 0) {
-                    continue;
+            // Also check getenv() for App Engine environment variables
+            foreach (getenv() as $name => $value) {
+                if (!isset(self::$variables[$name])) {
+                    self::$variables[$name] = $value;
                 }
+            }
 
-                list($name, $value) = explode('=', $line, 2);
-                $name = trim($name);
-                $value = trim($value);
+            // Only try to load .env file if we're not in production
+            if ((!isset(self::$variables['APP_ENV']) || self::$variables['APP_ENV'] !== 'production')) {
+                $envFile = dirname(__DIR__, 2) . '/.env';
 
-                // Remove quotes if they exist
-                if (preg_match('/^(["\']).*\1$/', $value)) {
-                    $value = substr($value, 1, -1);
+                if (file_exists($envFile)) {
+                    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+                    foreach ($lines as $line) {
+                        if (strpos($line, '#') === 0) {
+                            continue;
+                        }
+
+                        list($name, $value) = explode('=', $line, 2);
+                        $name = trim($name);
+                        $value = trim($value);
+
+                        // Only set from .env if not already set by environment
+                        if (!isset(self::$variables[$name])) {
+                            if (preg_match('/^(["\']).*\1$/', $value)) {
+                                $value = substr($value, 1, -1);
+                            }
+                            self::$variables[$name] = $value;
+                        }
+                    }
                 }
-
-                self::$variables[$name] = $value;
             }
         }
     }

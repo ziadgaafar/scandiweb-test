@@ -37,13 +37,23 @@ class MySQLConnection
     private function __construct()
     {
         try {
-            $this->connection = new PDO(
-                sprintf(
+            if (Environment::get('APP_ENV') === 'production') {
+                $dsn = sprintf(
+                    "mysql:unix_socket=%s;dbname=%s;charset=utf8",
+                    Environment::get('DB_SOCKET'),
+                    Environment::get('DB_DATABASE')
+                );
+            } else {
+                $dsn = sprintf(
                     "mysql:host=%s;port=%s;dbname=%s;charset=utf8",
                     Environment::get('DB_HOST', 'localhost'),
                     Environment::get('DB_PORT', '3306'),
                     Environment::get('DB_DATABASE')
-                ),
+                );
+            }
+
+            $this->connection = new PDO(
+                $dsn,
                 Environment::get('DB_USERNAME'),
                 Environment::get('DB_PASSWORD'),
                 [
