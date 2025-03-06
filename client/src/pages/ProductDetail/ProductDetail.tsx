@@ -170,7 +170,7 @@ class ProductDetailBase extends Component<
                 <div
                   key={index}
                   className={`size-20 cursor-pointer border border-transparent transition-all duration-300 relative overflow-hidden
-                  hover:border-text hover:-translate-y-0.5 hover:shadow-sm hover:not-active:img:scale-110
+                  hover:-translate-y-0.5 hover:shadow-sm hover:not-active:img:scale-110
                   ${
                     index === this.state.selectedImageIndex
                       ? "border-primary after:absolute after:inset-0 after:bg-black/10"
@@ -187,7 +187,7 @@ class ProductDetailBase extends Component<
               ))}
             </div>
           </div>
-          <div className="w-[610px] h-[511px] relative overflow-hidden border border-border rounded">
+          <div className="w-[610px] h-[511px] relative overflow-hidden rounded">
             <img
               src={product.gallery[this.state.selectedImageIndex]}
               alt={product.name}
