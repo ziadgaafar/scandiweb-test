@@ -1,0 +1,17 @@
+runtime: php81
+env: standard
+
+beta_settings:
+  cloud_sql_instances: "your-project-id:region:instance-name"
+
+handlers:
+  - url: /.*
+    script: public/index.php
+
+env_variables:
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  DB_DATABASE: "your_database_name"
+  DB_USERNAME: "your_username"
+  DB_PASSWORD: "your_password"
+  DB_SOCKET: "/cloudsql/your-project-id:region:instance-name"

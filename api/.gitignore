@@ -37,6 +37,7 @@ Thumbs.db
 .phpunit.result.cache
 _ide_helper.php
 .phpstorm.meta.php
+app.yaml
 
 # Database
 *.sql
