@@ -118,6 +118,10 @@ class App extends Component<Record<string, never>, AppState> {
     this.setState({ selectedCurrency: currency });
   };
 
+  clearCart = () => {
+    this.setState({ cartItems: [] });
+  };
+
   render() {
     const { isCartOpen, currentCategory, cartItems, selectedCurrency } =
       this.state;
@@ -139,6 +143,7 @@ class App extends Component<Record<string, never>, AppState> {
               onCartToggle={this.toggleCart}
               onAddItem={this.addToCart}
               onRemoveItem={this.removeFromCart}
+              clearCart={this.clearCart}
             />
             <main className="container mx-auto pt-40 pb-10">
               {isCartOpen && (

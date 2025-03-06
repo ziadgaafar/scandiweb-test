@@ -19,12 +19,19 @@ interface HeaderProps {
     productId: string,
     selectedAttributes: SelectedAttribute[]
   ) => void;
+  clearCart: () => void;
 }
 
 class Header extends Component<HeaderProps> {
   renderCartOverlay() {
-    const { cartItems, isCartOpen, selectedCurrency, onAddItem, onRemoveItem } =
-      this.props;
+    const {
+      cartItems,
+      isCartOpen,
+      selectedCurrency,
+      onAddItem,
+      onRemoveItem,
+      clearCart,
+    } = this.props;
 
     if (!isCartOpen) return null;
 
@@ -34,6 +41,7 @@ class Header extends Component<HeaderProps> {
         selectedCurrency={selectedCurrency}
         onAddItem={onAddItem}
         onRemoveItem={onRemoveItem}
+        clearCart={clearCart}
       />
     );
   }
