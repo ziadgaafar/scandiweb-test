@@ -91,8 +91,11 @@ class CategoryResolver
                 return [];
             }
 
-            // Use ProductRepository to get products with the category filter
-            return $this->productRepository->getAll(['category' => $categoryName]);
+            // Get products data and transform using ProductFactory
+            $productsData = $this->productRepository->getAll(['category' => $categoryName]);
+            return array_map(function ($productData) {
+                return \App\Models\Product\ProductFactory::create($productData)->toArray();
+            }, $productsData);
         } catch (\Exception $e) {
             throw new \RuntimeException(
                 "Error fetching products for category '{$categoryName}': " . $e->getMessage(),

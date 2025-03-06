@@ -46,12 +46,13 @@ class ProductRepository
             $stmt->execute($params);
             $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Process gallery images
+            // Process gallery images and fix inStock property
             foreach ($products as &$product) {
                 $product['gallery'] = !empty($product['gallery_images'])
                     ? explode('|||', $product['gallery_images'])
                     : [];
                 unset($product['gallery_images']);
+                $product['inStock'] = $product['in_stock'] == 1;
             }
 
             return $products;
@@ -85,7 +86,7 @@ class ProductRepository
             $product['gallery'] = $this->getProductGallery($id);
             $product['prices'] = $this->getProductPrices($id);
             $product['attributes'] = $this->getProductAttributes($id);
-            $product['inStock'] = (bool)$product['in_stock'];
+            $product['inStock'] = $product['in_stock'] == 1;
 
             return $product;
         } catch (ProductNotFoundException $e) {

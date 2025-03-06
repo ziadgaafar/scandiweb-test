@@ -25,7 +25,7 @@ class ProductType extends ObjectType
                     'type' => Type::nonNull(Type::boolean()),
                     'description' => 'Whether the product is in stock',
                     'resolve' => function ($product) {
-                        return (bool) ($product['in_stock'] ?? false);
+                        return (bool) ($product['inStock'] ?? false);
                     }
                 ],
                 'gallery' => [

@@ -68,8 +68,6 @@ const withRouter = (
       variables: { name: params.category || "all" },
     });
 
-    console.log({ data });
-
     return (
       <Component
         {...props}
