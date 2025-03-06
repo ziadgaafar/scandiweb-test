@@ -37,7 +37,10 @@ class CartOverlay extends Component<CartOverlayProps> {
     const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-      <div className="absolute top-20 right-[72px] w-96 max-h-[calc(100vh-100px)] bg-background p-8 px-4 z-100 overflow-y-auto">
+      <div
+        data-testid="cart-overlay"
+        className="absolute top-20 right-[72px] w-96 max-h-[calc(100vh-100px)] bg-background p-8 px-4 z-100 overflow-y-auto"
+      >
         <h2 className="font-bold text-base leading-[160%] mb-8">
           My Bag,{" "}
           <span className="font-medium">
