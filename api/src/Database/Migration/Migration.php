@@ -45,7 +45,7 @@ class Migration
                     brand VARCHAR(255) NOT NULL,
                     description TEXT,
                     category VARCHAR(191) NOT NULL,
-                    in_stock BOOLEAN DEFAULT true,
+                    inStock BOOLEAN DEFAULT true,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     FOREIGN KEY (category) REFERENCES categories(name) ON DELETE CASCADE

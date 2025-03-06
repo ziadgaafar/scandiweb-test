@@ -106,7 +106,7 @@ class Order extends AbstractModel
             // Get product details and validate availability
             $product = $this->productRepository->getById($item['productId']);
 
-            if (!$product['in_stock']) {
+            if (!$product['inStock']) {
                 throw new Exception("Product not available: {$item['productId']}");
             }
 

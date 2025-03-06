@@ -18,7 +18,7 @@ abstract class AbstractProduct
         'name',
         'brand',
         'category',
-        'in_stock',
+        'inStock',
         'description'
     ];
 
@@ -45,7 +45,7 @@ abstract class AbstractProduct
         $this->data = $data;
 
         // Ensure correct data types
-        $this->data['in_stock'] = (bool) $this->data['in_stock'];
+        $this->data['inStock'] = (bool) $this->data['inStock'];
         if (isset($this->data['prices'])) {
             foreach ($this->data['prices'] as &$price) {
                 $price['amount'] = (float) $price['amount'];
@@ -74,7 +74,7 @@ abstract class AbstractProduct
      */
     public function isAvailable(): bool
     {
-        return $this->data['in_stock'];
+        return $this->data['inStock'];
     }
 
     /**

@@ -117,7 +117,7 @@ class CategoryResolver
             $products = $this->categoryRepository->getProducts($categoryName);
 
             $inStockCount = array_reduce($products, function ($count, $product) {
-                return $count + ($product['in_stock'] ? 1 : 0);
+                return $count + ($product['inStock'] ? 1 : 0);
             }, 0);
 
             return [

@@ -75,7 +75,7 @@ class DatabaseSeeder
     {
         // Prepare statements
         $productStmt = $this->pdo->prepare("
-            INSERT INTO products (id, name, brand, description, category, in_stock) 
+            INSERT INTO products (id, name, brand, description, category, inStock) 
             VALUES (?, ?, ?, ?, ?, ?)
         ");
 
