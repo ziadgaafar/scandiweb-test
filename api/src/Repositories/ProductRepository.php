@@ -85,6 +85,7 @@ class ProductRepository
             $product['gallery'] = $this->getProductGallery($id);
             $product['prices'] = $this->getProductPrices($id);
             $product['attributes'] = $this->getProductAttributes($id);
+
             $product['inStock'] = $product['inStock'] == 1;
 
             return $product;
@@ -184,7 +185,7 @@ class ProductRepository
                 return [];
             }
 
-            // Then get items for each attribute set
+            // Then get specific items for each attribute set that are linked to this product
             foreach ($attributeSets as &$set) {
                 $itemsQuery = "
                     SELECT 
@@ -192,12 +193,19 @@ class ProductRepository
                         ai.display_value as displayValue,
                         ai.value
                     FROM attribute_items ai
-                    WHERE ai.attribute_set_id = :setId
+                    INNER JOIN product_attribute_items pai 
+                        ON pai.attribute_item_id = ai.id 
+                        AND pai.attribute_set_id = ai.attribute_set_id
+                    WHERE pai.product_id = :productId 
+                        AND pai.attribute_set_id = :setId
                     ORDER BY ai.id
                 ";
 
                 $stmt = $this->connection->prepare($itemsQuery);
-                $stmt->execute(['setId' => $set['id']]);
+                $stmt->execute([
+                    'productId' => $productId,
+                    'setId' => $set['id']
+                ]);
                 $set['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
 

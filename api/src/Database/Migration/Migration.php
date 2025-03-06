@@ -96,6 +96,19 @@ class Migration
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ",
 
+            'create_product_attribute_items_table' => "
+                CREATE TABLE IF NOT EXISTS product_attribute_items (
+                    product_id VARCHAR(191) NOT NULL,
+                    attribute_set_id VARCHAR(191) NOT NULL,
+                    attribute_item_id VARCHAR(191) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (product_id, attribute_set_id, attribute_item_id),
+                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+                    FOREIGN KEY (attribute_set_id) REFERENCES attribute_sets(id) ON DELETE CASCADE,
+                    FOREIGN KEY (attribute_item_id, attribute_set_id) REFERENCES attribute_items(id, attribute_set_id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ",
+
             'create_prices_table' => "
                 CREATE TABLE IF NOT EXISTS prices (
                     id INT AUTO_INCREMENT PRIMARY KEY,

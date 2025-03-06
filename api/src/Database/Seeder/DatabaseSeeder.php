@@ -99,6 +99,11 @@ class DatabaseSeeder
             VALUES (?, ?)
         ");
 
+        $productAttributeItemStmt = $this->pdo->prepare("
+            INSERT INTO product_attribute_items (product_id, attribute_set_id, attribute_item_id)
+            VALUES (?, ?, ?)
+        ");
+
         $priceStmt = $this->pdo->prepare("
             INSERT INTO prices (product_id, currency_id, amount) 
             VALUES (?, (SELECT id FROM currencies WHERE label = ?), ?)
@@ -152,6 +157,15 @@ class DatabaseSeeder
                         $product['id'],
                         $attribute['id']
                     ]);
+
+                    // Link product to specific attribute items
+                    foreach ($attribute['items'] as $item) {
+                        $productAttributeItemStmt->execute([
+                            $product['id'],
+                            $attribute['id'],
+                            $item['id']
+                        ]);
+                    }
                 }
             }
 

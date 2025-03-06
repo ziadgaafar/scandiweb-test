@@ -147,23 +147,30 @@ class AttributeRepository
             $stmt->execute(['productId' => $productId]);
             $sets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Then get items for each set
+            // Then get items for each set that are linked to this product
             $itemsQuery = "
                 SELECT 
-                    id,
-                    display_value as displayValue,
-                    value
-                FROM attribute_items
-                WHERE attribute_set_id = :setId
-                ORDER BY id
+                    ai.id,
+                    ai.display_value as displayValue,
+                    ai.value
+                FROM attribute_items ai
+                INNER JOIN product_attribute_items pai 
+                    ON pai.attribute_item_id = ai.id 
+                    AND pai.attribute_set_id = ai.attribute_set_id
+                WHERE pai.product_id = :productId 
+                    AND pai.attribute_set_id = :setId
+                ORDER BY ai.id
             ";
 
             $itemStmt = $this->connection->prepare($itemsQuery);
             $result = [];
 
-            // Combine sets with their items
+            // Combine sets with their filtered items
             foreach ($sets as $set) {
-                $itemStmt->execute(['setId' => $set['id']]);
+                $itemStmt->execute([
+                    'productId' => $productId,
+                    'setId' => $set['id']
+                ]);
                 $result[] = [
                     'id' => $set['id'],
                     'name' => $set['name'],
@@ -189,14 +196,17 @@ class AttributeRepository
     public function validateProductAttributes(string $productId, array $selectedAttributes): bool
     {
         try {
-            // Get valid attribute values for the product
+            // Get valid attribute values for the product from product_attribute_items
             $query = "
                 SELECT 
                     attr_sets.id as set_id,
                     items.value
                 FROM attribute_sets attr_sets
                 INNER JOIN product_attributes pa ON pa.attribute_set_id = attr_sets.id
-                INNER JOIN attribute_items items ON items.attribute_set_id = attr_sets.id
+                INNER JOIN product_attribute_items pai ON pai.attribute_set_id = attr_sets.id 
+                    AND pai.product_id = pa.product_id
+                INNER JOIN attribute_items items ON items.id = pai.attribute_item_id 
+                    AND items.attribute_set_id = pai.attribute_set_id
                 WHERE pa.product_id = :productId
             ";
 
