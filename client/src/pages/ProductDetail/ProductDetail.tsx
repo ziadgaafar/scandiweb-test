@@ -162,14 +162,14 @@ class ProductDetailBase extends Component<
     const { product } = data;
 
     return (
-      <div className="py-24 pb-10 grid grid-cols-[auto_minmax(0,1fr)] gap-[100px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[100px]">
         <div className="ml-10 gap-x-2 flex" data-testid="product-gallery">
           <div className="flex gap-10">
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8 max-h-[511px] overflow-y-auto">
               {product.gallery.map((image, index) => (
                 <div
                   key={index}
-                  className={`w-20 h-20 cursor-pointer border border-transparent transition-all duration-300 relative overflow-hidden
+                  className={`size-20 cursor-pointer border border-transparent transition-all duration-300 relative overflow-hidden
                   hover:border-text hover:-translate-y-0.5 hover:shadow-sm hover:not-active:img:scale-110
                   ${
                     index === this.state.selectedImageIndex
@@ -195,40 +195,30 @@ class ProductDetailBase extends Component<
             />
           </div>
         </div>
-        <div className="pr-10">
-          <h2 className="font-semibold text-[30px] leading-[27px] mb-1 text-text">
-            {product.brand}
-          </h2>
-          <div className="my-9">
-            <span className="font-bold text-lg leading-[18px] mb-2.5 block uppercase">
-              PRICE:
-            </span>
-            <span className="font-bold text-2xl leading-[18px] text-text">
-              {formatPrice(product.prices, this.props.selectedCurrency)}
-            </span>
-          </div>
-          <h1 className="font-normal text-[30px] leading-[27px] mb-[43px]">
+        <div className="flex flex-col w-fit gap-y-12 max-w-md">
+          <h2 className="font-semibold text-3xl leading-7 mb-1 text-text">
             {product.name}
-          </h1>
-          {product.attributes?.length > 0 &&
-            product.attributes.map((attribute) => (
-              <div
-                key={attribute.id}
-                className="mb-6"
-                data-testid={`product-attribute-${attribute.id}`}
-              >
-                <h3 className="uppercase font-bold text-lg leading-[18px] mb-2">
-                  {attribute.name}
-                </h3>
-                <div className="grid grid-cols-5 gap-3">
-                  {attribute.items.map((item) => (
-                    <button
-                      key={item.id}
-                      className={`relative overflow-hidden text-base transition-all duration-300 cursor-pointer
+          </h2>
+          <div className="flex flex-col gap-y-6">
+            {product.attributes?.length > 0 &&
+              product.attributes.map((attribute) => (
+                <div
+                  key={attribute.id}
+                  className="mb-6"
+                  data-testid={`product-attribute-${attribute.id}`}
+                >
+                  <h3 className="uppercase font-bold text-lg leading-4 mb-2">
+                    {attribute.name}:
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {attribute.items.map((item) => (
+                      <button
+                        key={item.id}
+                        className={`relative overflow-hidden text-base transition-all duration-300 cursor-pointer
                         ${
                           attribute.type === "swatch"
-                            ? "min-w-8 h-8 p-0.5 border border-border hover:not-selected:translate-y-[-2px] hover:not-selected:scale-110"
-                            : "min-w-[63px] h-[45px] flex items-center justify-center border border-text bg-transparent hover:not-selected:translate-y-[-2px] hover:not-selected:shadow-sm before:content-[''] before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-primary/10 hover:not-selected:before:translate-x-full before:transition-transform before:duration-300"
+                            ? "size-8 p-0.5 border border-border hover:not-selected:translate-y-[-2px] hover:not-selected:scale-110"
+                            : "w-20 h-10 flex items-center justify-center border border-text bg-transparent hover:not-selected:translate-y-[-2px] hover:not-selected:shadow-sm before:content-[''] before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-primary/10 hover:not-selected:before:translate-x-full before:transition-transform before:duration-300"
                         }
                         ${
                           this.state.selectedAttributes[attribute.id] ===
@@ -238,36 +228,45 @@ class ProductDetailBase extends Component<
                               : "!bg-text text-background border-text scale-105"
                             : ""
                         }`}
-                      style={
-                        attribute.type === "swatch"
-                          ? { backgroundColor: item.value }
-                          : undefined
-                      }
-                      onClick={() =>
-                        this.handleAttributeChange(attribute.id, item.value)
-                      }
-                      data-testid={`attribute-${attribute.id}-${item.value}`}
-                    >
-                      {attribute.type !== "swatch" && item.value}
-                    </button>
-                  ))}
+                        style={
+                          attribute.type === "swatch"
+                            ? { backgroundColor: item.value }
+                            : undefined
+                        }
+                        onClick={() =>
+                          this.handleAttributeChange(attribute.id, item.value)
+                        }
+                        data-testid={`attribute-${attribute.id}-${item.value}`}
+                      >
+                        {attribute.type !== "swatch" && item.value}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            <div className="">
+              <span className="font-bold text-lg mb-4 block uppercase">
+                PRICE:
+              </span>
+              <span className="font-bold text-2xl leading-4 text-text">
+                {formatPrice(product.prices, this.props.selectedCurrency)}
+              </span>
+            </div>
+            <button
+              className="cursor-pointer w-full h-[52px] bg-primary text-background font-semibold text-base uppercase transition-all duration-300 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-all before:duration-600 hover:not-disabled:before:left-full hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="add-to-cart"
+              disabled={!product.inStock}
+              onClick={this.handleAddToCart}
+            >
+              {product.inStock ? "ADD TO CART" : "OUT OF STOCK"}
+            </button>
+          </div>
           <div
             data-testid="product-description"
-            className="mb-5 mt-10 font-normal text-base text-text"
+            className="font-normal text-base text-text"
           >
             {parse(product.description || "")}
           </div>
-          <button
-            className="cursor-pointer w-full max-w-[292px] mt-5 h-[52px] bg-primary text-background font-semibold text-base uppercase transition-all duration-300 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-all before:duration-600 hover:not-disabled:before:left-full hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="add-to-cart"
-            disabled={!product.inStock}
-            onClick={this.handleAddToCart}
-          >
-            {product.inStock ? "ADD TO CART" : "OUT OF STOCK"}
-          </button>
         </div>
       </div>
     );

@@ -139,7 +139,7 @@ class App extends Component<Record<string, never>, AppState> {
               onAddItem={this.addToCart}
               onRemoveItem={this.removeFromCart}
             />
-            <main className="container mx-auto">
+            <main className="container mx-auto pt-40 pb-10">
               {isCartOpen && (
                 <div
                   className="fixed top-20 left-0 w-full h-[calc(100%-80px)] bg-[#39374838] backdrop-blur-xs z-10"

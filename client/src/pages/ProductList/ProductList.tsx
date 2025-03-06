@@ -139,7 +139,7 @@ class ProductListBase extends Component<
     const { name, products } = data.category;
 
     return (
-      <div className="pt-24 pb-10 min-h-screen">
+      <div>
         <h1 className="text-5xl font-normal mb-10 capitalize">{name}</h1>
         <div className="grid grid-cols-4 gap-10 mt-10">
           {products.map((product) => (
