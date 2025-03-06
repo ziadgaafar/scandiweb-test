@@ -1,5 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import "./ErrorBoundary.scss";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -38,9 +37,9 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary">
+        <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-[#f8f8f8] animate-fade-in">
           <svg
-            className="error-boundary__icon"
+            className="w-16 h-16 mb-6 text-error animate-[scale-in_0.5s_var(--ease-default)]"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -50,10 +49,13 @@ class ErrorBoundary extends Component<Props, State> {
               fill="currentColor"
             />
           </svg>
-          <p className="error-boundary__message">
+          <p className="text-xl leading-[1.6] text-text mb-8 max-w-[600px]">
             Something went wrong. Please try again.
           </p>
-          <button className="error-boundary__action" onClick={this.resetError}>
+          <button
+            className="px-8 py-4 bg-primary text-background font-semibold text-base rounded transition-all duration-300 hover:-translate-y-0.5 hover:shadow-primary active:translate-y-0 animate-[slide-up_0.5s_var(--ease-default)_0.3s_backwards]"
+            onClick={this.resetError}
+          >
             Return to Home
           </button>
         </div>

@@ -6,7 +6,6 @@ import { ProductList } from "@/pages/ProductList/ProductList";
 import { ProductDetail } from "@/pages/ProductDetail/ProductDetail";
 import { AppState, Product, SelectedAttribute } from "@/types";
 
-import "./styles/index.scss";
 import "./index.css";
 
 const client = new ApolloClient({
@@ -29,6 +28,8 @@ class App extends Component<Record<string, never>, AppState> {
     if (prevState.isCartOpen !== this.state.isCartOpen) {
       document.body.classList.toggle("prevent-scroll", this.state.isCartOpen);
     }
+
+    console.log(this.state.cartItems);
   }
 
   componentWillUnmount() {
@@ -125,7 +126,7 @@ class App extends Component<Record<string, never>, AppState> {
     return (
       <ApolloProvider client={client}>
         <BrowserRouter>
-          <div className="app">
+          <div>
             <Header
               currentCategory={currentCategory}
               cartItems={cartItems}
@@ -140,7 +141,7 @@ class App extends Component<Record<string, never>, AppState> {
               onAddItem={this.addToCart}
               onRemoveItem={this.removeFromCart}
             />
-            <main className="container">
+            <main className="container mx-auto">
               {isCartOpen && (
                 <div
                   className="overlay"

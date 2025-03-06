@@ -2,7 +2,6 @@ import { Component } from "react";
 import { Link } from "react-router-dom";
 import CartOverlay from "../Cart/CartOverlay";
 import { CartItem, Product, SelectedAttribute } from "../../types";
-import "./Header.scss";
 
 interface HeaderProps {
   currentCategory: string;
@@ -45,15 +44,17 @@ class Header extends Component<HeaderProps> {
     const { currentCategory, cartItemsCount, onCartToggle } = this.props;
 
     return (
-      <header className="header">
-        <div className="container header__content">
-          <nav className="header__nav">
+      <header className="h-20 fixed inset-x-0 top-0 bg-background z-100 border-b border-border">
+        <div className="container mx-auto h-full flex items-center justify-between">
+          <nav className="flex gap-8 h-full items-center">
             {this.categories.map((category) => (
               <Link
                 key={category}
                 to={`/${category === "all" ? "" : category}`}
-                className={`header__nav-link ${
-                  currentCategory === category ? "active" : ""
+                className={`h-full flex items-center text-base uppercase text-text border-b-2 border-transparent transition-all duration-300 hover:text-primary hover:border-primary ${
+                  currentCategory === category
+                    ? "border-primary text-primary"
+                    : ""
                 }`}
                 data-testid={
                   currentCategory === category
@@ -67,9 +68,9 @@ class Header extends Component<HeaderProps> {
             ))}
           </nav>
 
-          <div className="header__actions">
+          <div className="flex items-center gap-[22px]">
             <button
-              className="header__cart-button"
+              className="cursor-pointer relative flex items-center justify-center p-2 rounded-full transition-colors duration-300 hover:bg-black/5"
               onClick={onCartToggle}
               data-testid="cart-btn"
             >
@@ -95,7 +96,9 @@ class Header extends Component<HeaderProps> {
               </svg>
 
               {cartItemsCount > 0 && (
-                <span className="header__cart-count">{cartItemsCount}</span>
+                <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-text text-background rounded-full text-sm font-bold">
+                  {cartItemsCount}
+                </span>
               )}
             </button>
           </div>

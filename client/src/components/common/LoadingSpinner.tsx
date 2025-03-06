@@ -1,11 +1,10 @@
 import { Component } from "react";
-import "./LoadingSpinner.scss";
 
 class LoadingSpinner extends Component {
   render() {
     return (
-      <div className="loading-spinner-container">
-        <div className="loading-spinner"></div>
+      <div className="flex justify-center items-center min-h-screen w-full">
+        <div className="size-12 border-3 border-border border-t-primary rounded-full animate-spin"></div>
       </div>
     );
   }

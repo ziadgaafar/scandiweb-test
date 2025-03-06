@@ -1,7 +1,6 @@
 import { Component } from "react";
 import { ApolloError } from "@apollo/client";
 import { getErrorMessage } from "../../utils/errorHandling";
-import "./ErrorMessage.scss";
 
 interface ErrorMessageProps {
   message: string | ApolloError | Error;
@@ -14,8 +13,9 @@ class ErrorMessage extends Component<ErrorMessageProps> {
     const { message, actionText, onAction } = this.props;
 
     return (
-      <div className="error-message">
+      <div className="flex flex-col items-center justify-center p-6 min-h-[200px] text-center">
         <svg
+          className="w-12 h-12 mb-4 text-error"
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -27,11 +27,14 @@ class ErrorMessage extends Component<ErrorMessageProps> {
             fill="currentColor"
           />
         </svg>
-        <p>
+        <p className="text-base leading-[160%] text-text mb-4">
           {typeof message === "string" ? message : getErrorMessage(message)}
         </p>
         {actionText && onAction && (
-          <button className="error-message__action" onClick={onAction}>
+          <button
+            className="px-6 py-3 bg-primary text-background font-semibold text-sm uppercase transition-opacity duration-300 hover:opacity-80"
+            onClick={onAction}
+          >
             {actionText}
           </button>
         )}

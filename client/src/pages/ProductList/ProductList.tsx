@@ -5,7 +5,6 @@ import { GET_CATEGORY } from "../../graphql/queries";
 import ProductCard from "../../components/Product/ProductCard";
 import { LoadingSpinner, ErrorMessage } from "../../components/common";
 import { handleLoadingStates, isNetworkError } from "../../utils/errorHandling";
-import "./ProductList.scss";
 
 interface ProductListProps {
   selectedCurrency: string;
@@ -140,9 +139,9 @@ class ProductListBase extends Component<
     const { name, products } = data.category;
 
     return (
-      <div className="product-list bg-red-500">
-        <h1>{name}</h1>
-        <div className="product-grid">
+      <div className="pt-24 pb-10 min-h-screen">
+        <h1 className="text-5xl font-normal mb-10 capitalize">{name}</h1>
+        <div className="grid grid-cols-4 gap-10 mt-10">
           {products.map((product) => (
             <ProductCard
               key={product.id}

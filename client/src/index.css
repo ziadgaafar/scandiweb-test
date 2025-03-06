@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-primary: oklch(0.72 0.11 178);
+  --color-text: oklch(0.13 0.002 280);
+  --color-text-light: oklch(0.56 0.004 280);
+  --color-border: oklch(0.9 0.001 280);
+  --color-error: oklch(0.45 0.21 27.5);
+  --color-background: oklch(1 0 0);
+
+  /* Transitions */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-default: opacity 0.3s var(--ease-default);
+
+  /* Shadows */
+  --shadow-overlay: 0px 4px 35px rgb(168 172 176 / 0.19);
+  --inset-shadow-sm: 0 2px 8px rgb(0 0 0 / 0.1);
+  --inset-shadow-primary: 0 4px 12px rgb(94 206 123 / 0.3);
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.3s var(--ease-default);
+  --animate-slide-up: slide-up 0.3s var(--ease-default);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+:root {
+  font-family: "Raleway", sans-serif;
+}
