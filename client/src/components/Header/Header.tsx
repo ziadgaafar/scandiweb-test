@@ -101,8 +101,8 @@ class Header extends Component<HeaderProps> {
                 y2="4.9008"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stop-color="#52D67A" />
-                <stop offset="1" stop-color="#5AEE87" />
+                <stop stopColor="#52D67A" />
+                <stop offset="1" stopColor="#5AEE87" />
               </linearGradient>
             </defs>
           </svg>
