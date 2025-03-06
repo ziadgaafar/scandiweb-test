@@ -1,10 +1,10 @@
 import { Component } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, ApolloError } from "@apollo/client";
-import { GET_CATEGORY } from "../../graphql/queries";
-import ProductCard from "../../components/Product/ProductCard";
-import { LoadingSpinner, ErrorMessage } from "../../components/common";
-import { handleLoadingStates, isNetworkError } from "../../utils/errorHandling";
+import { GET_CATEGORY } from "@/graphql/queries";
+import ProductCard from "@/components/Product/ProductCard";
+import { LoadingSpinner, ErrorMessage } from "@/components/common";
+import { handleLoadingStates, isNetworkError } from "@/utils/errorHandling";
 
 interface ProductListProps {
   selectedCurrency: string;

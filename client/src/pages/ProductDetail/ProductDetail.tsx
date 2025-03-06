@@ -1,11 +1,12 @@
 import { Component } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, ApolloError } from "@apollo/client";
-import { GET_PRODUCT } from "../../graphql/queries";
-import { Product, SelectedAttribute } from "../../types";
-import { LoadingSpinner, ErrorMessage } from "../../components/common";
-import { handleLoadingStates, isNetworkError } from "../../utils/errorHandling";
-import { formatPrice } from "../../utils/currency";
+import { GET_PRODUCT } from "@/graphql/queries";
+import { Product, SelectedAttribute } from "@/types";
+import { LoadingSpinner, ErrorMessage } from "@/components/common";
+import { handleLoadingStates, isNetworkError } from "@/utils/errorHandling";
+import { formatPrice } from "@/utils/currency";
+import parse from "html-react-parser";
 
 interface ProductDetailProps {
   selectedCurrency: string;
@@ -256,8 +257,9 @@ class ProductDetailBase extends Component<
           <div
             data-testid="product-description"
             className="mb-5 mt-10 font-normal text-base text-text"
-            dangerouslySetInnerHTML={{ __html: product.description || "" }}
-          />
+          >
+            {parse(product.description || "")}
+          </div>
           <button
             className="cursor-pointer w-full max-w-[292px] mt-5 h-[52px] bg-primary text-background font-semibold text-base uppercase transition-all duration-300 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-[-100%] before:w-full before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-all before:duration-600 hover:not-disabled:before:left-full hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-primary disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="add-to-cart"

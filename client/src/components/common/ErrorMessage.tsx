@@ -1,6 +1,6 @@
 import { Component } from "react";
 import { ApolloError } from "@apollo/client";
-import { getErrorMessage } from "../../utils/errorHandling";
+import { getErrorMessage } from "@/utils/errorHandling";
 
 interface ErrorMessageProps {
   message: string | ApolloError | Error;

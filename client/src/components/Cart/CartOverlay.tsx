@@ -1,12 +1,12 @@
 import { Component } from "react";
 import { ApolloError } from "@apollo/client";
-import { CartItem, Product, SelectedAttribute } from "../../types";
+import { CartItem, Product, SelectedAttribute } from "@/types";
 import {
   calculateTotal,
   findPrice,
   formatPriceWithSymbol,
 } from "@/utils/currency";
-import { parseGraphQLError, retryOperation } from "../../utils/errorHandling";
+import { parseGraphQLError, retryOperation } from "@/utils/errorHandling";
 
 interface CartOverlayProps {
   items: CartItem[];

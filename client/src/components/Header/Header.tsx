@@ -1,7 +1,7 @@
 import { Component } from "react";
 import { Link } from "react-router-dom";
-import CartOverlay from "../Cart/CartOverlay";
-import { CartItem, Product, SelectedAttribute } from "../../types";
+import CartOverlay from "@/components/Cart/CartOverlay";
+import { CartItem, Product, SelectedAttribute } from "@/types";
 
 interface HeaderProps {
   currentCategory: string;

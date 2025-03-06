@@ -1,6 +1,6 @@
 import { Component } from "react";
 import { Link } from "react-router-dom";
-import { findPrice, formatPriceWithSymbol } from "../../utils/currency";
+import { findPrice, formatPriceWithSymbol } from "@/utils/currency";
 
 interface ProductCardProps {
   id: string;
