@@ -75,11 +75,12 @@ class Migration
 
             'create_attribute_items_table' => "
                 CREATE TABLE IF NOT EXISTS attribute_items (
-                    id VARCHAR(191) PRIMARY KEY,
+                    id VARCHAR(191) NOT NULL,
                     attribute_set_id VARCHAR(191) NOT NULL,
                     display_value VARCHAR(255) NOT NULL,
                     value VARCHAR(255) NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id, attribute_set_id),
                     FOREIGN KEY (attribute_set_id) REFERENCES attribute_sets(id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ",
