@@ -142,12 +142,8 @@ class App extends Component<Record<string, never>, AppState> {
             <main className="container mx-auto">
               {isCartOpen && (
                 <div
-                  className="overlay"
+                  className="fixed top-20 left-0 w-full h-[calc(100%-80px)] bg-[#39374838] backdrop-blur-xs z-10"
                   onClick={this.toggleCart}
-                  style={{
-                    animation:
-                      "fadeIn var(--transition-duration) var(--transition-timing)",
-                  }}
                 />
               )}
               <Routes>

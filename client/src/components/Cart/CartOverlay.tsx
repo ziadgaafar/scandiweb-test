@@ -37,20 +37,17 @@ class CartOverlay extends Component<CartOverlayProps> {
     const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-      <div className="absolute top-20 right-[72px] w-[325px] max-h-[calc(100vh-100px)] bg-background p-8 px-4 z-100 overflow-y-auto shadow-sm">
+      <div className="absolute top-20 right-[72px] w-96 max-h-[calc(100vh-100px)] bg-background p-8 px-4 z-100 overflow-y-auto">
         <h2 className="font-bold text-base leading-[160%] mb-8">
           My Bag,{" "}
           <span className="font-medium">
             {itemCount} {itemCount === 1 ? "Item" : "Items"}
           </span>
         </h2>
-        <div className="mb-8">
+        <div className="mb-8 space-y-12">
           {items.map((item, index) => (
-            <div
-              key={`${item.id}-${index}`}
-              className="grid grid-cols-[1fr_auto_auto] gap-2 py-6 border-b border-border first:pt-0"
-            >
-              <div>
+            <div key={`${item.id}-${index}`} className="flex gap-2 first:pt-0">
+              <div className="flex-1">
                 <h3 className="font-light text-base leading-[160%] mb-1">
                   {item.brand}
                 </h3>
@@ -117,7 +114,7 @@ class CartOverlay extends Component<CartOverlayProps> {
                     </div>
                   ))}
               </div>
-              <div className="flex flex-col justify-between items-center h-full py-1">
+              <div className="flex flex-col justify-between items-center">
                 <button
                   className="w-6 h-6 flex items-center justify-center border border-text text-base bg-transparent cursor-pointer transition-all duration-300 hover:bg-text hover:text-background"
                   data-testid="cart-item-amount-increase"
@@ -136,8 +133,12 @@ class CartOverlay extends Component<CartOverlayProps> {
                   -
                 </button>
               </div>
-              <div className="w-[121px] h-[190px]">
-                <img src={item.gallery[0]} alt={item.name} />
+              <div className="w-32">
+                <img
+                  src={item.gallery[0]}
+                  alt={item.name}
+                  className="h-full object-contain"
+                />
               </div>
             </div>
           ))}
