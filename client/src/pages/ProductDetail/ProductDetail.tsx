@@ -205,7 +205,7 @@ class ProductDetailBase extends Component<
                 <div
                   key={attribute.id}
                   className="mb-6"
-                  data-testid={`product-attribute-${attribute.id}`}
+                  data-testid={`product-attribute-${attribute.name.toLowerCase()}`}
                 >
                   <h3 className="uppercase font-bold text-lg leading-4 mb-2">
                     {attribute.name}:
@@ -236,7 +236,9 @@ class ProductDetailBase extends Component<
                         onClick={() =>
                           this.handleAttributeChange(attribute.id, item.value)
                         }
-                        data-testid={`attribute-${attribute.id}-${item.value}`}
+                        data-testid={`attribute-${attribute.name.toLowerCase()}-${
+                          item.value
+                        }`}
                       >
                         {attribute.type !== "swatch" && item.value}
                       </button>
