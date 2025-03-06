@@ -219,7 +219,7 @@ class ProductDetailBase extends Component<
                 <h3 className="uppercase font-bold text-lg leading-[18px] mb-2">
                   {attribute.name}
                 </h3>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-5 gap-3">
                   {attribute.items.map((item) => (
                     <button
                       key={item.id}
