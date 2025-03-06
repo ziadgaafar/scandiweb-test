@@ -14,6 +14,8 @@ const client = new ApolloClient({
 });
 
 class App extends Component<Record<string, never>, AppState> {
+  private readonly CART_STORAGE_KEY = "scandiweb_cart";
+
   constructor(props: Record<string, never>) {
     super(props);
     this.state = {
@@ -24,9 +26,23 @@ class App extends Component<Record<string, never>, AppState> {
     };
   }
 
+  componentDidMount() {
+    const storedCart = localStorage.getItem(this.CART_STORAGE_KEY);
+    if (storedCart) {
+      this.setState({ cartItems: JSON.parse(storedCart) });
+    }
+  }
+
   componentDidUpdate(_prevProps: Record<string, never>, prevState: AppState) {
     if (prevState.isCartOpen !== this.state.isCartOpen) {
       document.body.classList.toggle("prevent-scroll", this.state.isCartOpen);
+    }
+
+    if (prevState.cartItems !== this.state.cartItems) {
+      localStorage.setItem(
+        this.CART_STORAGE_KEY,
+        JSON.stringify(this.state.cartItems)
+      );
     }
   }
 
@@ -120,6 +136,7 @@ class App extends Component<Record<string, never>, AppState> {
 
   clearCart = () => {
     this.setState({ cartItems: [] });
+    localStorage.removeItem(this.CART_STORAGE_KEY);
   };
 
   render() {
