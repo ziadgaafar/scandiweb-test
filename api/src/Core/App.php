@@ -94,16 +94,14 @@ class App
 
     private function handleCORS(): void
     {
-        // Allow requests from any origin in development
-        if ($this->environment->get('APP_ENV') === 'development') {
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type');
+        // Allow CORS for all origins
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type');
 
-            // Handle preflight requests
-            if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-                exit(0);
-            }
+        // Handle preflight requests
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            exit(0);
         }
     }
 }
