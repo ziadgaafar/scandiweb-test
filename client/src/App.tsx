@@ -7,6 +7,7 @@ import { ProductDetail } from "@/pages/ProductDetail/ProductDetail";
 import { AppState, Product, SelectedAttribute } from "@/types";
 
 import "./styles/index.scss";
+import "./index.css";
 
 const client = new ApolloClient({
   uri: import.meta.env.VITE_GRAPHQL_URL,
