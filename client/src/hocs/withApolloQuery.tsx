@@ -5,8 +5,8 @@ import {
   OperationVariables,
   QueryResult,
 } from "@apollo/client";
-import LoadingSpinner from "@/components/common/LoadingSpinner"; // Assuming you have this
-import ErrorMessage from "@/components/common/ErrorMessage"; // Assuming you have this
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import ErrorMessage from "@/components/common/ErrorMessage";
 
 /**
  * Props injected by the withApolloQuery HOC.
