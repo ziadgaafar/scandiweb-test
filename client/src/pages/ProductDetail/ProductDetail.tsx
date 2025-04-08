@@ -1,12 +1,13 @@
 import { Component } from "react";
-import { useParams } from "react-router-dom";
-import { useQuery, ApolloError } from "@apollo/client";
+import { OperationVariables } from "@apollo/client"; // Import OperationVariables
 import { GET_PRODUCT } from "@/graphql/queries";
 import { Product, SelectedAttribute } from "@/types";
 import { LoadingSpinner, ErrorMessage } from "@/components/common";
 import { handleLoadingStates, isNetworkError } from "@/utils/errorHandling";
 import { formatPrice } from "@/utils/currency";
 import parse from "html-react-parser";
+import withRouterParams from "@/hocs/withRouterParams"; // Import HOC
+import withApolloQuery, { WithApolloQueryProps } from "@/hocs/withApolloQuery"; // Import HOC and props type
 
 interface ProductDetailProps {
   selectedCurrency: string;
@@ -16,56 +17,33 @@ interface ProductDetailProps {
   ) => void;
 }
 
-const withRouter = (
-  Component: React.ComponentType<
-    ProductDetailProps & {
-      params: { id?: string };
-      loading: boolean;
-      error?: ApolloError;
-      data?: { product: Product };
-    }
-  >
-) => {
-  return (props: Omit<ProductDetailProps, "params">) => {
-    const params = useParams();
-    const { loading, error, data } = useQuery(GET_PRODUCT, {
-      variables: { id: params.id },
-    });
+// Define the shape of the data returned by the GET_PRODUCT query
+interface GetProductData {
+  product: Product;
+}
 
-    return (
-      <Component
-        {...props}
-        params={params}
-        loading={loading}
-        error={error}
-        data={data}
-      />
-    );
-  };
-};
+// Define the type for the variables used in the GET_PRODUCT query
+interface GetProductVariables extends OperationVariables {
+  id?: string; // id can be undefined if not in URL yet
+}
 
 interface ProductDetailState {
   selectedAttributes: { [key: string]: string };
   selectedImageIndex: number;
 }
 
+// Define the props for the base component, including injected props from HOCs
+type ProductDetailBaseProps = ProductDetailProps &
+  WithApolloQueryProps<GetProductData, GetProductVariables> & {
+    params: { id?: string }; // Injected by withRouterParams
+  };
+
+// Base class component uses the new props type
 class ProductDetailBase extends Component<
-  ProductDetailProps & {
-    params: { id?: string };
-    loading: boolean;
-    error?: ApolloError;
-    data?: { product: Product };
-  },
+  ProductDetailBaseProps,
   ProductDetailState
 > {
-  constructor(
-    props: ProductDetailProps & {
-      params: { id?: string };
-      loading: boolean;
-      error?: ApolloError;
-      data?: { product: Product };
-    }
-  ) {
+  constructor(props: ProductDetailBaseProps) {
     super(props);
     this.state = {
       selectedAttributes: {},
@@ -320,5 +298,28 @@ class ProductDetailBase extends Component<
   }
 }
 
-export const ProductDetail = withRouter(ProductDetailBase);
+// Define options for withApolloQuery to map router params to query variables
+const apolloOptions = {
+  variables: (props: ProductDetailProps & { params: { id?: string } }) => ({
+    id: props.params.id, // Get id from router params
+  }),
+  // Skip the query if the id param is not available yet
+  skip: (props: ProductDetailProps & { params: { id?: string } }) =>
+    !props.params.id,
+};
+
+// Compose the HOCs:
+// 1. Wrap with withRouterParams to get URL parameters (product id)
+// 2. Wrap the result with withApolloQuery to fetch product data based on the id
+export const ProductDetail = withRouterParams(
+  withApolloQuery<
+    ProductDetailProps & { params: { id?: string } }, // Props expected by the component being wrapped
+    GetProductData, // Type of data returned by the query
+    GetProductVariables // Type of variables for the query
+  >(
+    GET_PRODUCT,
+    apolloOptions
+  )(ProductDetailBase)
+);
+
 export default ProductDetail;

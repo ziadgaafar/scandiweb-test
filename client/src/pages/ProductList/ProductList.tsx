@@ -1,10 +1,11 @@
 import { Component } from "react";
-import { useParams } from "react-router-dom";
-import { useQuery, ApolloError } from "@apollo/client";
+import { OperationVariables } from "@apollo/client";
 import { GET_CATEGORY } from "@/graphql/queries";
 import ProductCard from "@/components/Product/ProductCard";
 import { LoadingSpinner, ErrorMessage } from "@/components/common";
 import { handleLoadingStates, isNetworkError } from "@/utils/errorHandling";
+import withRouterParams from "@/hocs/withRouterParams"; // Import HOC
+import withApolloQuery, { WithApolloQueryProps } from "@/hocs/withApolloQuery"; // Import HOC and props type
 
 interface ProductListProps {
   selectedCurrency: string;
@@ -50,43 +51,19 @@ interface CategoryData {
   };
 }
 
-// Since we can't use hooks in class components, we need a wrapper
-const withRouter = (
-  Component: React.ComponentType<
-    ProductListProps & {
-      params: { category?: string };
-      loading: boolean;
-      error?: ApolloError;
-      data?: CategoryData;
-    }
-  >
-) => {
-  return (props: Omit<ProductListProps, "params">) => {
-    const params = useParams();
-    const { loading, error, data } = useQuery<CategoryData>(GET_CATEGORY, {
-      variables: { name: params.category || "all" },
-    });
+// Define the type for the variables used in the GET_CATEGORY query
+interface GetCategoryVariables extends OperationVariables {
+  name: string;
+}
 
-    return (
-      <Component
-        {...props}
-        params={params}
-        loading={loading}
-        error={error}
-        data={data}
-      />
-    );
+// Define the props for the base component, including injected props from HOCs
+type ProductListBaseProps = ProductListProps &
+  WithApolloQueryProps<CategoryData, GetCategoryVariables> & {
+    params: { category?: string }; // Injected by withRouterParams
   };
-};
 
-class ProductListBase extends Component<
-  ProductListProps & {
-    params: { category?: string };
-    loading: boolean;
-    error?: ApolloError;
-    data?: CategoryData;
-  }
-> {
+// Base class component remains largely the same, but uses the new props type
+class ProductListBase extends Component<ProductListBaseProps> {
   handleQuickShop = (product: Product) => {
     const defaultAttributes =
       product.attributes?.length > 0
@@ -156,5 +133,25 @@ class ProductListBase extends Component<
   }
 }
 
-export const ProductList = withRouter(ProductListBase);
+// Define options for withApolloQuery to map router params to query variables
+const apolloOptions = {
+  variables: (props: ProductListProps & { params: { category?: string } }) => ({
+    name: props.params.category || "all",
+  }),
+};
+
+// Compose the HOCs:
+// 1. Wrap with withRouterParams to get URL parameters
+// 2. Wrap the result with withApolloQuery to fetch data based on those parameters
+export const ProductList = withRouterParams(
+  withApolloQuery<
+    ProductListProps & { params: { category?: string } }, // Props expected by the component being wrapped (ProductListBase + params)
+    CategoryData, // Type of data returned by the query
+    GetCategoryVariables // Type of variables for the query
+  >(
+    GET_CATEGORY,
+    apolloOptions
+  )(ProductListBase)
+);
+
 export default ProductList;

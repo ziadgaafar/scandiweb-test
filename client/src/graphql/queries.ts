@@ -33,6 +33,14 @@ export const GET_CATEGORY = gql`
   }
 `;
 
+export const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      name
+    }
+  }
+`;
+
 export const CREATE_ORDER = gql`
   mutation CreateOrder($items: [OrderItemInput!]!) {
     createOrder(items: $items) {
